@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<title>ScanNote Pro</title>
+<style>
+:root {
+  --bg:#0f172a; --card:#1e293b; --text:#f1f5f9; --muted:#94a3b8;
+  --primary:#3b82f6; --success:#22c55e; --danger:#ef4444; --border:#334155;
+}
+[data-theme="light"] {
+  --bg:#f8fafc; --card:#fff; --text:#0f172a; --muted:#64748b;
+  --primary:#2563eb; --success:#16a34a; --danger:#dc2626; --border:#e2e8f0;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;padding-bottom:80px}
+header{position:sticky;top:0;z-index:40;background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:1.15rem;font-weight:700}
+.badge{font-size:.7rem;background:var(--primary);color:#fff;padding:3px 8px;border-radius:20px}
+.page{display:none;padding:16px;max-width:520px;margin:0 auto}
+.page.active{display:block}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.card h3{font-size:.95rem;margin-bottom:10px}
+.muted{color:var(--muted);font-size:.85rem}
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;text-align:center}
+.btn:active{opacity:.8}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:var(--danger)}
+.btn-success{background:var(--success)}
+.btn-sm{padding:8px 12px;font-size:.8rem;width:auto;display:inline-block;border-radius:8px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--card);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 2px 12px}
+nav button{flex:1;background:none;border:none;color:var(--muted);font-size:.6rem;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;cursor:pointer}
+nav button.active{color:var(--primary)}
+nav button span{font-size:1.25rem}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center}
+.stat .num{font-size:1.6rem;font-weight:800;color:var(--primary)}
+.stat .lbl{font-size:.75rem;color:var(--muted)}
+#scannerBox{position:relative;width:100%;aspect-ratio:3/4;background:#000;border-radius:16px;overflow:hidden;margin-bottom:14px}
+#video{width:100%;height:100%;object-fit:cover}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;max-width:240px;aspect-ratio:1;border:3px solid #3b82f6;border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.45);pointer-events:none}
+.scan-controls{display:flex;gap:8px;margin-bottom:12px}
+.scan-controls .btn{flex:1;padding:11px;font-size:.85rem}
+.mode-toggle{display:flex;background:var(--card);border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px}
+.mode-toggle button{flex:1;padding:11px;border:none;background:transparent;color:var(--muted);font-weight:600;font-size:.85rem;cursor:pointer}
+.mode-toggle button.active{background:var(--primary);color:#fff}
+.item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.item .id{font-weight:700;word-break:break-all}
+.item .meta{font-size:.75rem;color:var(--muted);margin-top:4px}
+.day-header{font-size:.8rem;font-weight:700;color:var(--muted);margin:16px 0 8px;display:flex;justify-content:space-between;align-items:center}
+input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:.95rem;margin-bottom:12px}
+.switch-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.switch{width:48px;height:28px;background:var(--border);border-radius:20px;position:relative;cursor:pointer}
+.switch.on{background:var(--primary)}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;background:#fff;border-radius:50%;transition:.2s}
+.switch.on::after{left:23px}
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;font-size:.9rem;font-weight:600;opacity:0;visibility:hidden;transition:.3s;z-index:9999;max-width:90%;text-align:center}
+.toast.show{opacity:1;visibility:visible}
+.toast.ok{background:#16a34a}
+.toast.err{background:#dc2626}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty span{font-size:2.5rem;display:block;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ScanNote Pro</h1>
+  <span class="badge" id="scanCountBadge">0 scan</span>
+</header>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="stat-grid">
+    <div class="stat"><div class="num" id="statToday">0</div><div class="lbl">Hari ini</div></div>
+    <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">Total</div></div>
+  </div>
+  <div class="card">
+    <h3>📌 Scan Terakhir</h3>
+    <div id="lastScanBox" class="muted">Belum ada scan.</div>
+  </div>
+  <button class="btn" onclick="go('scan')">📷 Mulai Scan</button>
+  <div style="height:10px"></div>
+  <button class="btn btn-outline" onclick="go('search')">🔎 Cari Data</button>
+</div>
+
+<!-- SCAN -->
+<div id="page-scan" class="page">
+  <div class="mode-toggle">
+    <button type="button" id="modeFast" class="active" onclick="setMode('fast')">Scan Cepat</button>
+    <button type="button" id="modeOnce" onclick="setMode('once')">Scan Sekali</button>
+  </div>
+  <div id="scannerBox">
+    <video id="video" playsinline muted></video>
+    <div class="scan-frame"></div>
+  </div>
+  <div class="scan-controls">
+    <button class="btn btn-outline" onclick="toggleFlash()">🔦 Flash</button>
+    <button class="btn btn-outline" onclick="cycleZoom()">🔍 Zoom</button>
+    <button class="btn" id="btnStartStop" onclick="toggleCamera()">▶ Mulai</button>
+  </div>
+  <p class="muted" style="text-align:center;font-size:.8rem" id="scanStatus">Tekan Mulai untuk scan</p>
+</div>
+
+<!-- SEARCH -->
+<div id="page-search" class="page">
+  <input type="text" id="searchInput" placeholder="Cari berdasarkan ID..." oninput="doSearch()">
+  <button class="btn" onclick="doSearch()">🔎 Cari</button>
+  <div style="height:12px"></div>
+  <div id="searchResult"></div>
+</div>
+
+<!-- HISTORY -->
+<div id="page-history" class="page">
+  <input type="text" id="historyFilter" placeholder="Filter riwayat..." oninput="renderHistory()">
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="btn btn-outline btn-sm" onclick="go('recycle')">🗑️ Recycle Bin</button>
+    <button class="btn btn-outline btn-sm" onclick="clearAll()">Hapus Semua</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+
+<!-- SHARE -->
+<div id="page-share" class="page">
+  <div class="card">
+    <h3>📤 Bagikan Data</h3>
+    <p class="muted" style="margin-bottom:14px">Pilih format</p>
+    <button class="btn" style="margin-bottom:10px" onclick="shareWA()">WhatsApp</button>
+    <button class="btn btn-outline" style="margin-bottom:10px" onclick="exportCSV()">Unduh CSV</button>
+    <button class="btn btn-outline" onclick="exportTXT()">Unduh TXT</button>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="page-settings" class="page">
+  <div class="card">
+    <h3>🎨 Tema</h3>
+    <div class="mode-toggle">
+      <button type="button" id="themeDark" onclick="setTheme('dark')">Gelap</button>
+      <button type="button" id="themeLight" onclick="setTheme('light')">Terang</button>
+      <button type="button" id="themeSystem" onclick="setTheme('system')">Sistem</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="switch-row"><span>🔊 Suara</span><div class="switch on" id="swSound" onclick="toggleSetting('sound')"></div></div>
+    <div class="switch-row"><span>📳 Getar</span><div class="switch on" id="swVibrate" onclick="toggleSetting('vibrate')"></div></div>
+    <div class="switch-row"><span>📅 Tampilkan Tanggal</span><div class="switch on" id="swDate" onclick="toggleSetting('showDate')"></div></div>
+    <div class="switch-row"><span>🚫 Anti Scan Ganda</span><div class="switch on" id="swAnti" onclick="toggleSetting('antiDuplicate')"></div></div>
+  </div>
+  <div class="card">
+    <h3>💾 Backup & Restore</h3>
+    <button class="btn btn-outline" style="margin-bottom:10px" onclick="backupData()">Backup JSON</button>
+    <button class="btn btn-outline" onclick="document.getElementById('restoreFile').click()">Restore JSON</button>
+    <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="restoreData(event)">
+  </div>
+  <div class="card">
+    <p class="muted" style="text-align:center;font-size:.8rem">ScanNote Pro v1.2</p>
+  </div>
+</div>
+
+<!-- RECYCLE -->
+<div id="page-recycle" class="page">
+  <button class="btn btn-outline" style="margin-bottom:14px" onclick="go('history')">← Kembali</button>
+  <div id="recycleList"></div>
+</div>
+
+<nav>
+  <button type="button" class="active" id="nav-home" onclick="go('home')"><span>🏠</span>Home</button>
+  <button type="button" id="nav-scan" onclick="go('scan')"><span>📷</span>Scan</button>
+  <button type="button" id="nav-search" onclick="go('search')"><span>🔎</span>Cari</button>
+  <button type="button" id="nav-history" onclick="go('history')"><span>📜</span>Riwayat</button>
+  <button type="button" id="nav-share" onclick="go('share')"><span>📤</span>Share</button>
+  <button type="button" id="nav-settings" onclick="go('settings')"><span>⚙️</span>Set</button>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<script>
+var scans = [];
+var recycle = [];
+var settings = { sound:true, vibrate:true, showDate:true, antiDuplicate:true, theme:'system' };
+var scanMode = 'fast';
+var scanning = false;
+var stream = null;
+var detector = null;
+var lastScanned = '';
+var lastScanTime = 0;
+var zoomLevel = 1;
+var torchOn = false;
+var videoTrack = null;
+var detectTimer = null;
+
+try {
+  scans = JSON.parse(localStorage.getItem('sn_scans') || '[]');
+  recycle = JSON.parse(localStorage.getItem('sn_recycle') || '[]');
+  var s = JSON.parse(localStorage.getItem('sn_settings') || '{}');
+  for (var k in s) settings[k] = s[k];
+} catch(e) {}
+
+function go(page) {
+  var pages = document.querySelectorAll('.page');
+  for (var i=0;i<pages.length;i++) pages[i].classList.remove('active');
+  var el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+
+  var ids = ['home','scan','search','history','share','settings'];
+  for (var j=0;j<ids.length;j++) {
+    var nav = document.getElementById('nav-' + ids[j]);
+    if (nav) nav.classList.toggle('active', ids[j] === page);
+  }
+
+  if (page !== 'scan' && scanning) stopCamera();
+  if (page === 'history') renderHistory();
+  if (page === 'home') { updateStats(); renderLastScan(); }
+  if (page === 'recycle') renderRecycle();
+}
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+function feedback(ok) {
+  if (settings.vibrate && navigator.vibrate) navigator.vibrate(ok ? [40,30,40] : [80,50,80]);
+  if (settings.sound) {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = ok ? 880 : 220;
+      g.gain.value = 0.08;
+      o.start();
+      setTimeout(function(){ o.stop(); ctx.close(); }, ok ? 120 : 250);
+    } catch(e) {}
+  }
+}
+
+function saveScans() {
+  localStorage.setItem('sn_scans', JSON.stringify(scans));
+  localStorage.setItem('sn_recycle', JSON.stringify(recycle));
+  updateStats();
+}
+function saveSettings() {
+  localStorage.setItem('sn_settings', JSON.stringify(settings));
+}
+
+function setTheme(t) {
+  settings.theme = t;
+  saveSettings();
+  applyTheme();
+}
+function applyTheme() {
+  var t = settings.theme;
+  if (t === 'system') {
+    t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+  var td = document.getElementById('themeDark');
+  var tl = document.getElementById('themeLight');
+  var ts = document.getElementById('themeSystem');
+  if (td) td.classList.toggle('active', settings.theme === 'dark');
+  if (tl) tl.classList.toggle('active', settings.theme === 'light');
+  if (ts) ts.classList.toggle('active', settings.theme === 'system');
+}
+
+function toggleSetting(key) {
+  settings[key] = !settings[key];
+  saveSettings();
+  updateSwitches();
+}
+function updateSwitches() {
+  var map = { sound:'swSound', vibrate:'swVibrate', showDate:'swDate', antiDuplicate:'swAnti' };
+  for (var k in map) {
+    var el = document.getElementById(map[k]);
+    if (el) el.classList.toggle('on', !!settings[k]);
+  }
+}
+
+function updateStats() {
+  var today = new Date().toDateString();
+  var c = 0;
+  for (var i=0;i<scans.length;i++) if (new Date(scans[i].ts).toDateString() === today) c++;
+  document.getElementById('statToday').textContent = c;
+  document.getElementById('statTotal').textContent = scans.length;
+  document.getElementById('scanCountBadge').textContent = scans.length + ' scan';
+}
+function renderLastScan() {
+  var box = document.getElementById('lastScanBox');
+  if (!scans.length) { box.innerHTML = 'Belum ada scan.'; return; }
+  var s = scans[0];
+  box.innerHTML = '<b style="word-break:break-all">'+esc(s.id)+'</b><br><span class="muted">'+fmt(s.ts)+' · '+(s.type||'code')+'</span>';
+}
+
+function setMode(m) {
+  scanMode = m;
+  document.getElementById('modeFast').classList.toggle('active', m==='fast');
+  document.getElementById('modeOnce').classList.toggle('active', m==='once');
+}
+
+function toggleCamera() {
+  if (scanning) stopCamera();
+  else startCamera();
+}
+
+function startCamera() {
+  if (!window.BarcodeDetector) {
+    toast('Pakai Chrome Android agar scanner berfungsi', 'err');
+    return;
+  }
+  if (!detector) {
+    try { detector = new BarcodeDetector({formats:['qr_code','ean_13','code_128','code_39']}); }
+    catch(e) {
+      try { detector = new BarcodeDetector({formats:['qr_code']}); }
+      catch(e2) { toast('Scanner tidak tersedia', 'err'); return; }
+    }
+  }
+  navigator.mediaDevices.getUserMedia({
+    video:{ facingMode:{ideal:'environment'}, width:{ideal:1280}, height:{ideal:720} },
+    audio:false
+  }).then(function(s){
+    stream = s;
+    var v = document.getElementById('video');
+    v.srcObject = stream;
+    v.play();
+    videoTrack = stream.getVideoTracks()[0];
+    scanning = true;
+    document.getElementById('btnStartStop').textContent = '⏹ Stop';
+    document.getElementById('scanStatus').textContent = 'Arahkan ke QR / Barcode...';
+    detectTimer = setInterval(detectCode, 300);
+  }).catch(function(){
+    toast('Gagal akses kamera', 'err');
+  });
+}
+
+function stopCamera() {
+  scanning = false;
+  if (detectTimer) clearInterval(detectTimer);
+  detectTimer = null;
+  if (stream) { stream.getTracks().forEach(function(t){t.stop();}); stream=null; }
+  document.getElementById('video').srcObject = null;
+  document.getElementById('btnStartStop').textContent = '▶ Mulai';
+  document.getElementById('scanStatus').textContent = 'Kamera berhenti';
+  torchOn = false; zoomLevel = 1;
+}
+
+function detectCode() {
+  if (!scanning || !detector) return;
+  var v = document.getElementById('video');
+  if (v.readyState < 2) return;
+  detector.detect(v).then(function(codes){
+    if (codes && codes.length) {
+      var raw = (codes[0].rawValue||'').trim();
+      if (raw) handleScan(raw, codes[0].format||'qr_code');
+    }
+  }).catch(function(){});
+}
+
+function handleScan(raw, format) {
+  var now = Date.now();
+  if (settings.antiDuplicate) {
+    if (raw === lastScanned && now-lastScanTime < 2500) return;
+    for (var i=0;i<scans.length;i++) {
+      if (scans[i].id === raw) {
+        document.getElementById('scanStatus').textContent = '⚠️ Sudah pernah discan';
+        feedback(false);
+        toast('ID sudah ada', 'err');
+        lastScanned = raw; lastScanTime = now;
+        if (scanMode==='once') stopCamera();
+        return;
+      }
+    }
+  }
+  lastScanned = raw; lastScanTime = now;
+  scans.unshift({id:raw, type:format, ts:now});
+  saveScans();
+  feedback(true);
+  toast('✅ '+raw.substring(0,28), 'ok');
+  document.getElementById('scanStatus').textContent = '✅ Tersimpan';
+  updateStats(); renderLastScan();
+  if (scanMode==='once') stopCamera();
+}
+
+function toggleFlash() {
+  if (!videoTrack) return;
+  try {
+    var caps = videoTrack.getCapabilities();
+    if (!caps.torch) { toast('Flash tidak tersedia', 'err'); return; }
+    torchOn = !torchOn;
+    videoTrack.applyConstraints({advanced:[{torch:torchOn}]});
+  } catch(e) { toast('Flash gagal', 'err'); }
+}
+
+function cycleZoom() {
+  if (!videoTrack) return;
+  try {
+    var caps = videoTrack.getCapabilities();
+    if (!caps.zoom) { toast('Zoom tidak tersedia', 'err'); return; }
+    var min = caps.zoom.min||1, max = caps.zoom.max||3;
+    zoomLevel = zoomLevel>=max ? min : Math.min(max, zoomLevel+0.5);
+    videoTrack.applyConstraints({advanced:[{zoom:zoomLevel}]});
+  } catch(e) { toast('Zoom gagal', 'err'); }
+}
+
+function doSearch() {
+  var q = (document.getElementById('searchInput').value||'').trim().toLowerCase();
+  var box = document.getElementById('searchResult');
+  if (!q) { box.innerHTML=''; return; }
+  var found = [];
+  for (var i=0;i<scans.length;i++) if (scans[i].id.toLowerCase().indexOf(q)!==-1) found.push(scans[i]);
+  if (!found.length) {
+    box.innerHTML = '<div class="empty"><span>🔍</span>ID belum pernah discan.</div>';
+    return;
+  }
+  var h = '';
+  for (var j=0;j<found.length;j++) h += itemHtml(found[j], false);
+  box.innerHTML = h;
+}
+
+function itemHtml(s, canDel) {
+  var time = settings.showDate ? fmt(s.ts) : new Date(s.ts).toLocaleTimeString('id-ID');
+  var del = canDel ? '<button class="btn btn-sm btn-danger" onclick="deleteOne('+s.ts+')">🗑️</button>' : '';
+  return '<div class="item"><div><div class="id">'+esc(s.id)+'</div><div class="meta">'+time+' · '+(s.type||'code')+'</div></div>'+del+'</div>';
+}
+
+function renderHistory() {
+  var filter = (document.getElementById('historyFilter').value||'').trim().toLowerCase();
+  var list = scans;
+  if (filter) {
+    list = [];
+    for (var i=0;i<scans.length;i++) if (scans[i].id.toLowerCase().indexOf(filter)!==-1) list.push(scans[i]);
+  }
+  var box = document.getElementById('historyList');
+  if (!list.length) { box.innerHTML='<div class="empty"><span>📜</span>Belum ada riwayat</div>'; return; }
+  var groups = {};
+  for (var i=0;i<list.length;i++) {
+    var d = new Date(list[i].ts).toDateString();
+    if (!groups[d]) groups[d]=[];
+    groups[d].push(list[i]);
+  }
+  var h = '';
+  for (var day in groups) {
+    h += '<div class="day-header"><span>'+fmtDay(day)+'</span><button class="btn btn-sm btn-danger" onclick="deleteDay(\''+day+'\')">Hapus hari</button></div>';
+    for (var j=0;j<groups[day].length;j++) h += itemHtml(groups[day][j], true);
+  }
+  box.innerHTML = h;
+}
+
+function deleteOne(ts) {
+  for (var i=0;i<scans.length;i++) {
+    if (scans[i].ts===ts) { recycle.unshift(scans[i]); scans.splice(i,1); break; }
+  }
+  saveScans(); renderHistory(); toast('Ke Recycle Bin'); feedback(true);
+}
+function deleteDay(dayStr) {
+  if (!confirm('Hapus semua data tanggal ini?')) return;
+  var keep=[];
+  for (var i=0;i<scans.length;i++) {
+    if (new Date(scans[i].ts).toDateString()===dayStr) recycle.unshift(scans[i]);
+    else keep.push(scans[i]);
+  }
+  scans=keep; saveScans(); renderHistory(); toast('Hari dihapus'); feedback(true);
+}
+function clearAll() {
+  if (!scans.length) return;
+  if (!confirm('Pindahkan SEMUA ke Recycle Bin?')) return;
+  recycle = scans.concat(recycle); scans=[]; saveScans(); renderHistory(); toast('Semua dipindah');
+}
+
+function renderRecycle() {
+  var box = document.getElementById('recycleList');
+  if (!recycle.length) { box.innerHTML='<div class="empty"><span>🗑️</span>Kosong</div>'; return; }
+  var h = '<button class="btn btn-danger" style="margin-bottom:12px" onclick="emptyRecycle()">Kosongkan</button>';
+  for (var i=0;i<recycle.length;i++) {
+    var s=recycle[i];
+    h += '<div class="item"><div><div class="id">'+esc(s.id)+'</div><div class="meta">'+fmt(s.ts)+'</div></div>'+
+      '<div><button class="btn btn-sm btn-success" onclick="restoreOne('+s.ts+')">↩</button> '+
+      '<button class="btn btn-sm btn-danger" onclick="purgeOne('+s.ts+')">✖</button></div></div>';
+  }
+  box.innerHTML = h;
+}
+function restoreOne(ts) {
+  for (var i=0;i<recycle.length;i++) {
+    if (recycle[i].ts===ts) { scans.unshift(recycle[i]); recycle.splice(i,1); break; }
+  }
+  saveScans(); renderRecycle(); toast('Dipulihkan');
+}
+function purgeOne(ts) {
+  recycle = recycle.filter(function(s){ return s.ts!==ts; });
+  saveScans(); renderRecycle(); toast('Dihapus permanen');
+}
+function emptyRecycle() {
+  if (!confirm('Hapus permanen semua?')) return;
+  recycle=[]; saveScans(); renderRecycle(); toast('Dikosongkan');
+}
+
+function shareWA() {
+  if (!scans.length) { toast('Tidak ada data','err'); return; }
+  var text='*ScanNote Pro*%0A%0A';
+  var max=Math.min(scans.length,40);
+  for (var i=0;i<max;i++) text+=(i+1)+'. '+encodeURIComponent(scans[i].id)+'%0A';
+  if (scans.length>40) text+='%0A...+'+ (scans.length-40)+' lainnya';
+  window.open('https://wa.me/?text='+text,'_blank');
+}
+function exportCSV() {
+  if (!scans.length) { toast('Tidak ada data','err'); return; }
+  var csv='ID,Type,Timestamp,Date\n';
+  for (var i=0;i<scans.length;i++) {
+    var s=scans[i];
+    csv+='"'+s.id.replace(/"/g,'""')+'",'+s.type+','+s.ts+',"'+new Date(s.ts).toLocaleString('id-ID')+'"\n';
+  }
+  dl('scannote-'+Date.now()+'.csv', csv, 'text/csv');
+  toast('CSV diunduh','ok');
+}
+function exportTXT() {
+  if (!scans.length) { toast('Tidak ada data','err'); return; }
+  var txt='ScanNote Pro\n'+new Date().toLocaleString('id-ID')+'\n\n';
+  for (var i=0;i<scans.length;i++) txt+=(i+1)+'. '+scans[i].id+'\n   '+new Date(scans[i].ts).toLocaleString('id-ID')+'\n\n';
+  dl('scannote-'+Date.now()+'.txt', txt, 'text/plain');
+  toast('TXT diunduh','ok');
+}
+function dl(name, content, type) {
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type:type}));
+  a.download=name; a.click();
+}
+
+function backupData() {
+  var data={scans:scans,recycle:recycle,settings:settings,exported:Date.now()};
+  dl('scannote-backup-'+Date.now()+'.json', JSON.stringify(data,null,2), 'application/json');
+  toast('Backup OK','ok');
+}
+function restoreData(e) {
+  var file=e.target.files[0]; if(!file) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try {
+      var data=JSON.parse(r.result);
+      if (data.scans) scans=data.scans;
+      if (data.recycle) recycle=data.recycle;
+      if (data.settings) for (var k in data.settings) settings[k]=data.settings[k];
+      saveScans(); saveSettings(); applyTheme(); updateSwitches(); updateStats();
+      toast('Restore OK','ok'); feedback(true);
+    } catch(err) { toast('File invalid','err'); }
+  };
+  r.readAsText(file); e.target.value='';
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmt(ts){ return new Date(ts).toLocaleString('id-ID',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtDay(d){
+  var t=new Date().toDateString(), y=new Date(Date.now()-864e5).toDateString();
+  if(d===t) return 'Hari ini'; if(d===y) return 'Kemarin';
+  return new Date(d).toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+// INIT
+applyTheme();
+updateSwitches();
+updateStats();
+renderLastScan();
+</script>
+</body>
+</html>
