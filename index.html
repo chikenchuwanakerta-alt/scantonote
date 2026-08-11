@@ -1,0 +1,2842 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SPX Express 12">
+<link rel="manifest" href="manifest.json">
+<title>SPX Express 12</title>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
+<style>
+body{margin:0;font-family:sans-serif;background:#0f172a;color:#f1f5f9;padding-bottom:80px}
+header{padding:14px 16px;background:#1e293b;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+header b{font-size:1.1rem}
+.badge{background:#3b82f6;color:#fff;font-size:12px;padding:3px 8px;border-radius:20px}
+.page{display:none;padding:16px}
+.page.on{display:block}
+.card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:12px}
+.btn{display:block;width:100%;padding:14px;border:0;border-radius:12px;background:#3b82f6;color:#fff;font-size:16px;font-weight:700;margin-bottom:8px}
+.btn:active{opacity:.8}
+.btn2{background:transparent;border:1px solid #334155;color:#f1f5f9}
+.btn3{background:#ef4444}
+.btn-sm{display:inline-block;width:auto;padding:8px 12px;font-size:13px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#1e293b;display:flex;gap:6px;border-top:1px solid #334155;padding:8px 6px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;background:#334155;border:0;color:#e2e8f0;padding:10px 2px;font-size:11px;font-weight:700;border-radius:10px;cursor:pointer}
+nav button.on{background:#3b82f6;color:#fff}
+nav button:active{opacity:.85}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat div{background:#1e293b;border-radius:12px;padding:14px;text-align:center}
+.stat b{display:block;font-size:22px;color:#3b82f6}
+.stat span{font-size:12px;color:#94a3b8}
+#box{width:100%;aspect-ratio:4/3;max-height:42vh;background:#000;border-radius:14px;overflow:hidden;margin:0 auto 10px;position:relative}
+#video{width:100%;height:100%;object-fit:cover;display:block}
+#scanCanvas{display:none}
+/* full frame scan - no qrbox overlay */
+.row{display:flex;gap:8px}
+.row .btn{flex:1}
+input,select{width:100%;padding:12px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:15px;margin-bottom:10px;box-sizing:border-box}
+.item{background:#1e293b;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.item .item-l{flex:1;min-width:0}
+.item .item-r{display:flex;gap:6px;flex-shrink:0;align-items:center}
+.item b{word-break:break-all}
+.item small{display:block;color:#94a3b8;font-size:12px;margin-top:4px}
+.tag{display:inline-block;background:#3b82f6;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;margin-top:4px}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#334155;color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;z-index:99;display:none}
+.toast.on{display:block}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;align-items:flex-end}
+.modal.on{display:flex}
+.modal .in{background:#1e293b;width:100%;border-radius:20px 20px 0 0;padding:20px 16px 28px;max-height:70vh;overflow:auto}
+.cat{display:block;width:100%;padding:14px;margin:0 0 8px;border:1px solid #334155;border-radius:12px;background:#0f172a;color:#fff;font-size:16px;font-weight:700;text-align:left;box-sizing:border-box}
+.muted{color:#ffffff;font-size:14px}
+.sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #334155;cursor:pointer}
+.sw:active{opacity:.85}
+.toko{border:1px solid #334155;border-radius:12px;margin-bottom:12px;overflow:hidden}
+.toko-h{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#2f3a53;gap:8px}
+.toko-h b{font-size:14px}
+.toko-h .cnt{background:#334155;color:#fff;font-size:15px;font-weight:700;padding:4px 12px;border-radius:12px}
+.toko-h .copyall{background:#334155;color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700}
+.toko-b{padding:6px 10px}
+.id-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #334155}
+.id-row:last-child{border-bottom:0}
+.id-row .txt{flex:1;word-break:break-all;font-size:13px;color:#f1f5f9;font-weight:600}
+.id-row .txt small{display:block;color:#94a3b8;font-size:11px;margin-top:2px;font-weight:400}
+.id-row .cp{background:#3b82f6;color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;flex-shrink:0}
+.id-row .del{background:#ef4444;color:#fff;border:0;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;flex-shrink:0}
+.empty-toko{padding:10px 12px;color:#94a3b8;font-size:13px}
+  /* ===========================
+   FOTO / GALERI
+=========================== */
+
+.photo-gallery{display:flex;flex-direction:column;gap:14px}
+.photo-day-head{
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  padding:2px 2px 6px;
+}
+.photo-day-head span{
+  font-size:13px;
+  font-weight:700;
+  color:#e2e8f0;
+  background:#1e293b;
+  border:1px solid #334155;
+  border-radius:999px;
+  padding:4px 12px;
+}
+.photo-grid{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:4px;
+margin-top:0;
+background:transparent;
+border:0;
+border-radius:10px;
+overflow:visible;
+}
+
+.photo-item{
+position:relative;
+background:#1e293b;
+overflow:hidden;
+aspect-ratio:1/1;
+border-radius:8px;
+}
+.photo-item.lp-active,
+.photo-item.selected{
+outline:2px solid #3b82f6;
+outline-offset:-2px;
+z-index:2;
+}
+.photo-item.selected::after{
+content:"✓";
+position:absolute;
+top:6px;right:6px;
+width:22px;height:22px;border-radius:50%;
+background:#3b82f6;color:#fff;font-size:13px;font-weight:700;
+display:flex;align-items:center;justify-content:center;
+line-height:22px;text-align:center;
+box-shadow:0 2px 6px rgba(0,0,0,.35);
+}
+
+.photo-item img{
+width:100%;
+height:100%;
+display:block;
+object-fit:cover;
+cursor:pointer;
+-webkit-touch-callout:none;
+user-select:none;
+}
+
+.photo-delete{background:#ef4444;color:#fff}
+.photo-download{background:#3b82f6;color:#fff}
+.photo-share{background:#10b981;color:#fff}
+
+/* Bar aksi multi-select (tekan lama) */
+.lp-del-toast{
+position:fixed;
+left:50%;
+bottom:90px;
+transform:translateX(-50%);
+background:#1e293b;
+border:1px solid #334155;
+border-radius:14px;
+padding:12px;
+display:none;
+flex-direction:column;
+align-items:stretch;
+gap:10px;
+z-index:1000;
+box-shadow:0 8px 24px rgba(0,0,0,.45);
+min-width:260px;
+max-width:calc(100vw - 24px);
+width:320px;
+}
+.lp-del-toast.on{display:flex}
+.lp-del-toast .lp-title{color:#e2e8f0;font-size:13px;font-weight:600;text-align:center}
+.lp-del-toast .lp-actions{display:flex;gap:8px;flex-wrap:wrap}
+.lp-del-toast button{
+border:0;border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;color:#fff;flex:1;min-width:70px
+}
+.lp-del-toast .lp-share{background:#10b981}
+.lp-del-toast .lp-ok{background:#ef4444}
+.lp-del-toast .lp-cancel{background:#334155}
+
+#cameraBox{margin-top:0}
+#photoCamBox{
+  width:100%;
+  aspect-ratio:3/4;
+  max-height:62vh;
+  background:#000;
+  border-radius:14px;
+  overflow:hidden;
+  margin:0 auto 14px;
+  position:relative;
+}
+#photoVideo{width:100%;height:100%;border-radius:14px;background:#000;object-fit:cover;display:block}
+.photo-actions{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin-bottom:8px;
+}
+.photo-actions .btn-ambil{
+  width:70%;
+  max-width:260px;
+  padding:16px 20px;
+  font-size:16px;
+  border-radius:14px;
+  margin:0;
+}
+.photo-actions .btn-tutup{
+  width:50%;
+  max-width:180px;
+  padding:10px 14px;
+  font-size:13px;
+  margin:0;
+}
+
+.fullscreen-photo{
+position:fixed;
+top:0;left:0;right:0;bottom:0;
+background:rgba(0,0,0,.96);
+display:none;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:999;
+padding:0;
+}
+.fullscreen-photo.show{display:flex}
+.fullscreen-photo .fs-img-wrap{
+flex:1;
+display:flex;
+align-items:center;
+justify-content:center;
+width:100%;
+padding:16px 16px 0;
+min-height:0;
+overflow:hidden;
+touch-action:none;
+position:relative;
+}
+.fullscreen-photo img{
+max-width:100%;
+max-height:100%;
+object-fit:contain;
+border-radius:8px;
+transform-origin:center center;
+will-change:transform;
+user-select:none;
+-webkit-user-drag:none;
+}
+.fullscreen-photo .fs-actions{
+display:flex;
+gap:10px;
+width:100%;
+padding:14px 16px;
+padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));
+background:linear-gradient(transparent,rgba(0,0,0,.85));
+box-sizing:border-box;
+}
+.fullscreen-photo .fs-actions button{
+flex:1;
+border:0;
+border-radius:12px;
+padding:14px 8px;
+font-size:14px;
+font-weight:700;
+cursor:pointer;
+color:#fff;
+}
+.fullscreen-photo .fs-close{
+position:absolute;
+top:12px;
+right:12px;
+background:rgba(30,41,55,.85);
+color:#fff;
+border:0;
+border-radius:50%;
+width:40px;
+height:40px;
+font-size:20px;
+font-weight:700;
+cursor:pointer;
+z-index:2;
+}
+  .confirm-modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.65);
+display:none;
+justify-content:center;
+align-items:center;
+z-index:9999;
+}
+
+.confirm-modal.show{
+display:flex;
+}
+
+.confirm-box{
+width:90%;
+max-width:340px;
+background:#1e293b;
+border-radius:16px;
+padding:20px;
+color:#fff;
+text-align:center;
+}
+
+.confirm-box h3{
+margin:0 0 10px;
+}
+
+.confirm-btn{
+display:flex;
+gap:10px;
+margin-top:20px;
+}
+
+.confirm-btn button{
+flex:1;
+}
+
+.photo-delete{
+background:#ef4444 !important;
+color:#fff !important;
+font-weight:bold;
+  }
+</style>
+</head>
+<body>
+<header>
+  <b>SPX Express 12</b>
+</header>
+<div class="toast" id="toast"></div>
+
+<div class="page on" id="home">
+  <div id="homeMain">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:700">ID per Toko</div>
+        <div id="totalHome" style="font-weight:700;color:#ffffff;font-size:16px">Total: 0</div>
+      </div>
+      <div id="perToko" class="muted">Belum ada data</div>
+    </div>
+    <button class="btn" onclick="openScan()">Mulai Scan</button>
+  </div>
+
+  <div id="homeScan" style="display:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn btn2 btn-sm" style="margin:0;width:auto;font-size:13px" onclick="closeScan()">Kembali</button>
+    </div>
+
+    <div class="card" style="padding:12px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#94a3b8">Mode Scan</div>
+      <div class="row" style="margin:0;gap:8px">
+        <button class="btn btn-sm" id="btnFast" onclick="setMode('fast')" style="margin:0;flex:1;font-size:13px">Cepat</button>
+        <button class="btn btn2 btn-sm" id="btnOnce" onclick="setMode('once')" style="margin:0;flex:1;font-size:13px">Sekali</button>
+      </div>
+    </div>
+
+    <div id="box" style="margin-bottom:10px">
+      <video id="video" playsinline muted autoplay></video>
+      <canvas id="scanCanvas"></canvas>
+    </div>
+
+    <div class="row" style="margin:0 0 6px;gap:8px">
+      <button class="btn btn2 btn-sm" style="margin:0;flex:1;font-size:13px" onclick="flash()">Flash</button>
+      <button class="btn btn-sm" id="btnCam" style="margin:0;flex:1.3;font-size:13px" onclick="cam()">Mulai</button>
+      <button class="btn btn2 btn-sm" style="margin:0;flex:1;font-size:13px" onclick="zoom()">Zoom</button>
+    </div>
+    <p class="muted" style="text-align:center;font-size:13px;margin:4px 0 12px;color:#94a3b8" id="status">Tekan Mulai</p>
+
+    <div class="card" style="padding:12px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#94a3b8">Input Manual</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="manualId" placeholder="Ketik ID..." autocomplete="off" style="margin-bottom:0;flex:1;font-size:13px;padding:10px" onkeydown="if(event.key==='Enter')inputManual()">
+        <button class="btn btn-sm" style="margin:0;width:auto;font-size:13px;padding:10px 14px" onclick="inputManual()">Tambah</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="history">
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#94a3b8">Cari ID</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input id="q" placeholder="Ketik ID..." autocomplete="off" style="margin-bottom:0;flex:1;font-size:13px;padding:10px" onkeydown="if(event.key==='Enter')cari()">
+      <button type="button" class="cp" style="padding:10px 14px" onclick="cari()">Cari</button>
+    </div>
+    <div id="hasilCari"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:10px">
+    <button class="btn btn2 btn-sm" style="margin:0;flex:1;font-size:13px" onclick="go('recycle')">Recycle Bin</button>
+    <button class="btn btn3 btn-sm" style="margin:0;flex:1;font-size:13px" onclick="hapusSemua()">Hapus Semua</button>
+  </div>
+  <div id="hasilHist"></div>
+</div>
+<div class="page" id="photo">
+  <div class="card" id="photoStartCard">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#94a3b8">Kamera</div>
+    <button class="btn btn-sm" style="margin:0;width:100%;font-size:13px;padding:12px" onclick="openCamera()">Ambil Foto</button>
+  </div>
+
+  <div id="cameraBox" style="display:none">
+    <div id="photoCamBox">
+      <video id="photoVideo" autoplay playsinline muted></video>
+    </div>
+    <div class="photo-actions">
+      <button class="btn btn-ambil" onclick="takePhoto()">Ambil</button>
+      <button class="btn btn2 btn-tutup" onclick="closeCamera()">Tutup</button>
+    </div>
+  </div>
+
+  <canvas id="photoCanvas" style="display:none"></canvas>
+
+  <div id="photoGalleryLabel" style="font-weight:700;font-size:13px;margin:14px 0 8px;color:#94a3b8">Galeri</div>
+  <div id="gallery" class="photo-gallery"></div>
+</div>
+<div class="page" id="share">
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#94a3b8">Filter Toko</div>
+    <select id="sCat" onchange="sharePreview()" style="margin-bottom:10px;font-size:13px;padding:10px"></select>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:13px;color:#94a3b8">Total</span>
+      <span id="shareCount" style="font-weight:700;color:#ffffff;font-size:15px">0</span>
+    </div>
+    <div class="row" style="margin:0;gap:8px">
+      <button class="btn btn-sm" style="margin:0;flex:1;font-size:13px" onclick="wa()">WhatsApp</button>
+      <button class="btn btn2 btn-sm" style="margin:0;flex:1;font-size:13px" onclick="txt()">Unduh ID</button>
+    </div>
+  </div>
+  <div id="hasilShare"></div>
+</div>
+
+<div class="page" id="settings">
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#94a3b8">Kelola Toko</div>
+    <div id="listCat"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+      <input id="newCat" placeholder="Nama toko baru" style="margin-bottom:0;flex:1;font-size:13px;padding:10px">
+      <button type="button" class="cp" style="padding:10px 14px" onclick="addCat()">Tambah</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;margin-bottom:4px;color:#94a3b8">Preferensi</div>
+    <div class="sw" onclick="tog('sound')"><span style="font-size:13px">Suara</span><span id="sSound" class="cnt">ON</span></div>
+    <div class="sw" onclick="tog('vibrate')"><span style="font-size:13px">Getar</span><span id="sVibrate" class="cnt">ON</span></div>
+    <div class="sw" onclick="tog('anti')" style="border-bottom:0"><span style="font-size:13px">Anti Scan Ganda</span><span id="sAnti" class="cnt">ON</span></div>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#94a3b8">Data</div>
+    <div class="row" style="margin:0;gap:8px">
+      <button class="btn btn2 btn-sm" style="margin:0;flex:1;font-size:13px" onclick="backup()">Backup</button>
+      <button class="btn btn2 btn-sm" style="margin:0;flex:1;font-size:13px" onclick="document.getElementById('file').click()">Restore</button>
+    </div>
+    <input type="file" id="file" accept=".json" style="display:none" onchange="restore(event)">
+  </div>
+</div>
+
+<div class="page" id="recycle">
+  <div id="recycleActions" style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:12px">
+    <button type="button" id="btnKosongRec" class="btn btn3 btn-sm" style="margin:0;width:auto;font-size:13px;display:none" onclick="kosong()">Kosongkan semua</button>
+    <button type="button" class="btn btn2 btn-sm" style="margin:0;width:auto;font-size:13px" onclick="go('history')">Kembali</button>
+  </div>
+  <div id="hasilRec"></div>
+</div>
+
+<div class="page" id="toko">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button class="btn btn2 btn-sm" style="margin:0;width:auto;font-size:13px" onclick="go('home')">Kembali</button>
+  </div>
+  <div class="card" style="margin-top:0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px">
+      <div style="font-weight:700;font-size:1.05rem" id="tokoTitle">Toko</div>
+      <div id="tokoCount" style="font-weight:700;color:#ffffff;font-size:16px">0</div>
+    </div>
+    <div id="tokoActions" style="display:none;margin-bottom:8px">
+      <button class="btn" style="margin-bottom:0" onclick="copyTokoCurrent()">Salin semua</button>
+    </div>
+    <div id="hasilToko"></div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="in">
+    <h3 style="text-align:center;margin:0 0 6px">Pilih Toko</h3>
+    <p class="muted" style="text-align:center" id="modalId">-</p>
+    <div id="modalCat"></div>
+    <button class="btn btn2" onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
+<nav>
+
+<button class="on" id="n-home" onclick="go('home')">
+Home
+</button>
+
+<button id="n-history" onclick="go('history')">
+Riwayat
+</button>
+
+<button id="n-share" onclick="go('share')">
+Share
+</button>
+
+<button id="n-photo" onclick="go('photo')">
+Foto
+</button>
+
+<button id="n-settings" onclick="go('settings')">
+Set
+</button>
+
+</nav>
+
+<script>
+  var currentLocation="Mencari lokasi...";
+var currentAddress="Mencari alamat...";
+var lastGoodLocation="";
+var locationWatchId=null;
+var locationBusy=0;
+var locationPromise=null;
+  // scans = Home (belum di-salin) | riwayat = Riwayat (sudah di-salin) | recycle = Recycle Bin
+  var scans=[], riwayat=[], recycle=[], cats=["ACC","Davis","Pampam","Calista","Davis Mall"];
+  // ===== FOTO =====
+var photoStream = null;
+var photoTrack = null;
+var photos = [];
+  // ===== DATABASE FOTO =====
+var photoDB = null;
+var set={sound:1,vibrate:1,anti:1};
+var mode="fast", scanning=0, stream=null, last="", lastT=0, track=null, pending=null, torchOn=0, zoomLv=1, scanTimer=null, zxReader=null, zxReader1D=null, nativeDet=null, bdBusy=0;
+
+try{
+  var a=localStorage.getItem("sn1"); if(a) scans=JSON.parse(a);
+  var b=localStorage.getItem("sn2"); if(b) recycle=JSON.parse(b);
+  var c=localStorage.getItem("sn3"); if(c) cats=JSON.parse(c);
+  var d=localStorage.getItem("sn4"); if(d) set=JSON.parse(d);
+  var e=localStorage.getItem("sn5"); if(e) riwayat=JSON.parse(e);
+}catch(e){}
+
+function save(){
+  localStorage.setItem("sn1",JSON.stringify(scans));
+  localStorage.setItem("sn2",JSON.stringify(recycle));
+  localStorage.setItem("sn3",JSON.stringify(cats));
+  localStorage.setItem("sn4",JSON.stringify(set));
+  localStorage.setItem("sn5",JSON.stringify(riwayat));
+  stat();
+}
+
+var currentPage="home";
+var currentToko="";
+var navPages=["home","history","share","photo","settings"];
+
+function go(p){
+  if(p==="search") p="history";
+  // Scan sudah digabung ke Home (bukan halaman nav terpisah)
+  if(p==="scan"){ go("home"); openScan(); return; }
+  var ps=["home","history","share","photo","settings","recycle","toko"];
+  for(var i=0;i<ps.length;i++){
+    var el=document.getElementById(ps[i]);
+    if(el) el.className="page"+(ps[i]==p?" on":"");
+    var n=document.getElementById("n-"+ps[i]);
+    if(n) n.className=(ps[i]==p?"on":"");
+  }
+  currentPage=p;
+  // Tutup panel scan & stop kamera saat pindah halaman / klik tab Home
+  if(p==="home"){
+    closeScan(true);
+    moveOldScansToRiwayat();
+    stat();
+    perToko();
+  } else {
+    closeScan(true);
+  }
+  if(p=="history"){ fill(); hist(); }
+  if(p=="recycle") rec();
+  if(p=="settings") listToko();
+  if(p=="share"){ fill(); sharePreview(); }
+  if(p=="toko") renderToko();
+  if(p=="photo"){ prefetchLocation(); }
+}
+
+function openScan(){
+  var main=document.getElementById("homeMain");
+  var panel=document.getElementById("homeScan");
+  if(main) main.style.display="none";
+  if(panel) panel.style.display="block";
+  // Pastikan tab Home aktif
+  var nh=document.getElementById("n-home");
+  if(nh) nh.className="on";
+  currentPage="home";
+}
+
+function closeScan(silent){
+  if(scanning) stop(silent);
+  var main=document.getElementById("homeMain");
+  var panel=document.getElementById("homeScan");
+  if(panel) panel.style.display="none";
+  if(main) main.style.display="block";
+  if(!silent){
+    perToko();
+  }
+}
+
+// ===== SWIPE NAVIGASI =====
+var swipeX=0, swipeY=0, swipeT=0, swipeActive=0;
+
+function swipeStart(e){
+  // Jangan swipe kalau lagi di input / modal / kamera scroll
+  var t=e.target;
+  if(t && (t.tagName==="INPUT" || t.tagName==="TEXTAREA" || t.tagName==="SELECT" || t.closest && (t.closest(".modal") || t.closest("#box") || t.closest("nav")))) return;
+  var touch=e.touches ? e.touches[0] : e;
+  swipeX=touch.clientX;
+  swipeY=touch.clientY;
+  swipeT=Date.now();
+  swipeActive=1;
+}
+
+function swipeEnd(e){
+  if(!swipeActive) return;
+  swipeActive=0;
+  var touch=e.changedTouches ? e.changedTouches[0] : e;
+  var dx=touch.clientX - swipeX;
+  var dy=touch.clientY - swipeY;
+  var dt=Date.now() - swipeT;
+  // Minimal 60px horizontal, lebih horizontal daripada vertical, max 500ms
+  if(Math.abs(dx)<60 || Math.abs(dx)<Math.abs(dy)*1.2 || dt>500) return;
+  // Recycle & toko tidak ikut swipe (bukan tab nav)
+  if(currentPage==="recycle" || currentPage==="toko") return;
+  // Jangan swipe kalau panel scan terbuka di Home
+  var hs=document.getElementById("homeScan");
+  if(hs && hs.style.display==="block") return;
+  var idx=navPages.indexOf(currentPage);
+  if(idx<0) return;
+  if(dx<0 && idx<navPages.length-1){
+    // swipe kiri → halaman berikutnya
+    go(navPages[idx+1]);
+  } else if(dx>0 && idx>0){
+    // swipe kanan → halaman sebelumnya
+    go(navPages[idx-1]);
+  }
+}
+
+document.addEventListener("touchstart", swipeStart, {passive:true});
+document.addEventListener("touchend", swipeEnd, {passive:true});
+
+function toast(m){
+  var t=document.getElementById("toast");
+  t.textContent=m; t.className="toast on";
+  setTimeout(function(){t.className="toast";},2000);
+}
+
+function buzz(ok) {
+  if (set.vibrate && navigator.vibrate) navigator.vibrate(ok ? 40 : 80);
+  playBeep(ok);   // ← tambah baris ini
+}
+
+function copyText(text){
+  if(!text) return;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      toast("Disalin: "+text.substring(0,24)+(text.length>24?"...":""));
+      buzz(1);
+    }).catch(function(){ fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text){
+  var ta=document.createElement("textarea");
+  ta.value=text;
+  ta.style.position="fixed";
+  ta.style.left="-9999px";
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand("copy"); toast("Disalin"); buzz(1); }
+  catch(e){ toast("Gagal salin"); }
+  document.body.removeChild(ta);
+}
+
+function stat(){
+  // badge dihapus
+}
+
+function perToko(){
+  var el=document.getElementById("perToko");
+  var totEl=document.getElementById("totalHome");
+  if(totEl) totEl.textContent="Total: "+scans.length;
+  if(!cats.length){ el.innerHTML="Belum ada toko"; return; }
+
+  var map={};
+  for(var i=0;i<cats.length;i++) map[cats[i]]=[];
+  for(var j=0;j<scans.length;j++){
+    var s=scans[j];
+    if(s.cat && map[s.cat]) map[s.cat].push(s);
+  }
+
+  var h="";
+  for(var k=0;k<cats.length;k++){
+    var name=cats[k];
+    var list=map[name]||[];
+    h+="<div class='toko' style='cursor:pointer' onclick=\"openToko('"+escAttr(name)+"')\">";
+    h+="<div class='toko-h'><div><b>"+esc(name)+"</b></div>";
+    h+="<span class='cnt'>"+list.length+"</span>";
+    h+="</div>";
+    h+="</div>";
+  }
+  el.innerHTML=h;
+}
+
+function openToko(name){
+  currentToko=name;
+  go("toko");
+}
+
+function renderToko(){
+  var name=currentToko||"";
+  var titleEl=document.getElementById("tokoTitle");
+  var countEl=document.getElementById("tokoCount");
+  var box=document.getElementById("hasilToko");
+  var act=document.getElementById("tokoActions");
+  if(titleEl) titleEl.textContent=name||"Toko";
+
+  var list=[];
+  for(var i=0;i<scans.length;i++){
+    if(scans[i].cat===name) list.push(scans[i]);
+  }
+  if(countEl) countEl.textContent=String(list.length);
+  if(act) act.style.display=list.length?"block":"none";
+
+  if(!list.length){
+    box.innerHTML="<div class='empty-toko' style='padding:16px 0;text-align:center'>Belum ada scan</div>";
+    return;
+  }
+  var h="";
+  for(var m=0;m<list.length;m++){
+    h+="<div class='id-row'>";
+    h+="<div class='txt' onclick=\"salinHome("+list[m].ts+")\">"+esc(list[m].id)+"<small>"+tgl(list[m].ts)+"</small></div>";
+    h+="<button type='button' class='cp' onclick=\"salinHome("+list[m].ts+")\">Salin</button>";
+    h+="<button type='button' class='del' onclick=\"delHome("+list[m].ts+")\">Hapus</button>";
+    h+="</div>";
+  }
+  box.innerHTML=h;
+}
+
+function refreshTokoOrHome(){
+  if(currentPage==="toko") renderToko();
+  else perToko();
+}
+
+function salinHome(ts){
+  var item=null, idx=-1;
+  for(var i=0;i<scans.length;i++){
+    if(scans[i].ts==ts){ item=scans[i]; idx=i; break; }
+  }
+  if(!item) return;
+  copyText(item.id);
+  scans.splice(idx,1);
+  riwayat.unshift(item);
+  save();
+  refreshTokoOrHome();
+  toast("Pindah ke Riwayat");
+}
+
+function copyToko(name){
+  var ids=[], keep=[];
+  for(var i=0;i<scans.length;i++){
+    if(scans[i].cat===name){
+      ids.push(scans[i].id);
+      riwayat.unshift(scans[i]);
+    } else {
+      keep.push(scans[i]);
+    }
+  }
+  if(!ids.length){ toast("Kosong"); return; }
+  scans=keep;
+  save();
+  refreshTokoOrHome();
+  copyText(ids.join("\n"));
+  toast("Pindah ke Riwayat");
+}
+
+function copyTokoCurrent(){
+  if(!currentToko) return;
+  copyToko(currentToko);
+}
+
+function setMode(m){
+  mode=m;
+  var bf=document.getElementById("btnFast");
+  var bo=document.getElementById("btnOnce");
+  if(bf){
+    bf.className="btn btn-sm"+(m==="fast"?"":" btn2");
+    bf.style.margin="0";
+    bf.style.flex="1";
+    bf.style.fontSize="13px";
+  }
+  if(bo){
+    bo.className="btn btn-sm"+(m==="once"?"":" btn2");
+    bo.style.margin="0";
+    bo.style.flex="1";
+    bo.style.fontSize="13px";
+  }
+}
+
+function cam(){ if(scanning) stop(); else start(); }
+
+function playBeep(ok){
+  if(!set.sound) return;
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    var now=ctx.currentTime;
+    // Dua oscillator = suara lebih keras & jelas di speaker HP
+    function tone(freq, start, dur, vol){
+      var o=ctx.createOscillator();
+      var g=ctx.createGain();
+      o.type="square";
+      o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001, now+start);
+      g.gain.exponentialRampToValueAtTime(vol, now+start+0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+start+dur);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(now+start);
+      o.stop(now+start+dur+0.02);
+    }
+    if(ok){
+      // Beep sukses: 2 nada tinggi, keras
+      tone(1200, 0, 0.12, 0.55);
+      tone(1500, 0.12, 0.14, 0.6);
+    }else{
+      // Beep gagal/sudah ada: nada rendah
+      tone(300, 0, 0.18, 0.5);
+      tone(220, 0.16, 0.22, 0.45);
+    }
+    setTimeout(function(){ try{ ctx.close(); }catch(e){} }, 500);
+  }catch(e){}
+}
+
+function initZxReader(){
+  if(zxReader) return zxReader;
+  if(typeof ZXing==="undefined") return null;
+  try{
+    var hints=new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
+      ZXing.BarcodeFormat.QR_CODE,
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A,
+      ZXing.BarcodeFormat.UPC_E,
+      ZXing.BarcodeFormat.ITF,
+      ZXing.BarcodeFormat.CODABAR
+    ]);
+    // TRY_HARDER hanya di path lambat
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, false);
+    zxReader=new ZXing.MultiFormatReader();
+    zxReader.setHints(hints);
+    return zxReader;
+  }catch(e){
+    console.error("initZxReader", e);
+    return null;
+  }
+}
+
+// Reader khusus 1D — prioritas Code 128, lebih ringan & sering dipanggil
+function initZxReader1D(){
+  if(zxReader1D) return zxReader1D;
+  if(typeof ZXing==="undefined") return null;
+  try{
+    var hints=new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.ITF,
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.CODABAR,
+      ZXing.BarcodeFormat.UPC_A,
+      ZXing.BarcodeFormat.UPC_E
+    ]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    zxReader1D=new ZXing.MultiFormatReader();
+    zxReader1D.setHints(hints);
+    return zxReader1D;
+  }catch(e){
+    console.error("initZxReader1D", e);
+    return null;
+  }
+}
+
+function initCode128Reader(){
+  if(typeof ZXing==="undefined" || !ZXing.Code128Reader) return null;
+  try{
+    return new ZXing.Code128Reader();
+  }catch(e){ return null; }
+}
+
+// Native Chrome BarcodeDetector — mirip kecepatan app native
+function initNativeDetector(){
+  if(nativeDet) return nativeDet;
+  if(typeof BarcodeDetector==="undefined") return null;
+  var formatLists=[
+    ["qr_code","code_128","code_39","ean_13","ean_8","upc_a","upc_e","itf","codabar"],
+    ["qr_code","code_128","code_39","ean_13"],
+    ["qr_code","code_128"],
+    ["qr_code"]
+  ];
+  for(var i=0;i<formatLists.length;i++){
+    try{
+      nativeDet=new BarcodeDetector({ formats: formatLists[i] });
+      console.log("BarcodeDetector OK:", formatLists[i].join(","));
+      return nativeDet;
+    }catch(e){}
+  }
+  try{
+    nativeDet=new BarcodeDetector();
+    console.log("BarcodeDetector OK: default formats");
+    return nativeDet;
+  }catch(e){
+    console.log("BarcodeDetector tidak tersedia");
+    nativeDet=null;
+    return null;
+  }
+}
+
+function applyFastFocus(tr, forceSingle){
+  if(!tr || !tr.applyConstraints) return;
+  try{
+    var caps = tr.getCapabilities ? tr.getCapabilities() : {};
+    var adv = [];
+    var settings = tr.getSettings ? tr.getSettings() : {};
+
+    // 1) Continuous autofocus (paling penting untuk scan cepat)
+    if(caps.focusMode && caps.focusMode.indexOf){
+      if(forceSingle && caps.focusMode.indexOf("single-shot") >= 0){
+        // Tap-to-focus: single-shot dulu biar re-lock cepat, lalu continuous
+        adv.push({ focusMode: "single-shot" });
+      } else if(caps.focusMode.indexOf("continuous") >= 0){
+        adv.push({ focusMode: "continuous" });
+      } else if(caps.focusMode.indexOf("single-shot") >= 0){
+        adv.push({ focusMode: "single-shot" });
+      }
+    }
+
+    // 2) Fokus ke titik tengah + sedikit sebaran (bantu barcode di tengah)
+    if(caps.pointsOfInterest){
+      adv.push({
+        pointsOfInterest: [
+          { x: 0.5, y: 0.5 },
+          { x: 0.42, y: 0.48 },
+          { x: 0.58, y: 0.52 }
+        ]
+      });
+    }
+
+    // 3) Exposure continuous + white balance continuous (kontras bar lebih bagus)
+    if(caps.exposureMode && caps.exposureMode.indexOf && caps.exposureMode.indexOf("continuous") >= 0){
+      adv.push({ exposureMode: "continuous" });
+    }
+    if(caps.whiteBalanceMode && caps.whiteBalanceMode.indexOf && caps.whiteBalanceMode.indexOf("continuous") >= 0){
+      adv.push({ whiteBalanceMode: "continuous" });
+    }
+
+    // 4) Focus distance (kalau support) → jarak dekat ideal barcode (~0.15-0.4m)
+    if(caps.focusDistance){
+      var fd = caps.focusDistance;
+      var nearIdeal = 0.25; // meter
+      if(typeof fd.min === "number" && typeof fd.max === "number"){
+        nearIdeal = Math.max(fd.min, Math.min(fd.max, 0.25));
+        adv.push({ focusDistance: nearIdeal });
+      }
+    }
+
+    // Apply advanced dulu
+    if(adv.length){
+      tr.applyConstraints({ advanced: adv }).catch(function(){});
+    }
+
+    // 5) Plain constraints (beberapa device Android lebih patuh di level ini)
+    var plain = {};
+    if(caps.focusMode && caps.focusMode.indexOf){
+      if(forceSingle && caps.focusMode.indexOf("single-shot") >= 0){
+        plain.focusMode = "single-shot";
+      } else if(caps.focusMode.indexOf("continuous") >= 0){
+        plain.focusMode = "continuous";
+      }
+    }
+    if(caps.pointsOfInterest){
+      plain.pointsOfInterest = [{ x: 0.5, y: 0.5 }];
+    }
+    if(Object.keys(plain).length){
+      tr.applyConstraints(plain).catch(function(){});
+    }
+
+    // 6) Setelah single-shot (tap), kembalikan ke continuous secepatnya
+    if(forceSingle && caps.focusMode && caps.focusMode.indexOf("continuous") >= 0){
+      setTimeout(function(){
+        try{
+          tr.applyConstraints({
+            advanced: [{ focusMode: "continuous", pointsOfInterest: [{ x: 0.5, y: 0.5 }] }]
+          }).catch(function(){});
+          tr.applyConstraints({ focusMode: "continuous" }).catch(function(){});
+        }catch(e){}
+      }, 350);
+    }
+  }catch(e){
+    console.log("focus constrain skip", e);
+  }
+}
+
+function start(){
+  if(typeof ZXing==="undefined"){ toast("ZXing belum load — cek internet"); return; }
+  if(!cats.length){ toast("Tambah toko dulu"); return; }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast("Kamera tidak didukung");
+    return;
+  }
+
+  stop(true);
+
+  scanning=1;
+  document.getElementById("btnCam").textContent="Stop";
+  document.getElementById("status").textContent="Menyalakan kamera...";
+
+  // Redmi 9 / mid-low end: 1280x720 + frameRate tinggi lebih responsif AF & decode
+  var constraints={
+    audio:false,
+    video:{
+      facingMode:{ ideal:"environment" },
+      width:{ ideal:1280, max:1280 },
+      height:{ ideal:720, max:720 },
+      frameRate:{ ideal:30, min:15 }
+    }
+  };
+
+  navigator.mediaDevices.getUserMedia(constraints).then(function(s){
+    stream=s;
+    var v=document.getElementById("video");
+    v.srcObject=s;
+    v.setAttribute("playsinline","true");
+    v.muted=true;
+    var playP=v.play();
+    if(playP && playP.catch) playP.catch(function(){});
+
+    track=s.getVideoTracks()[0]||null;
+    applyFastFocus(track);
+    // Fokus kuat lagi setelah kamera stabil
+    setTimeout(function(){ applyFastFocus(track, true); }, 400);
+    setTimeout(function(){ applyFastFocus(track); }, 900);
+    initZxReader();
+    initZxReader1D();
+    initNativeDetector();
+
+    document.getElementById("status").textContent="Arahkan ke barcode...";
+    try{
+      var vv=document.getElementById("video");
+      if(vv && !vv._focusTap){
+        vv._focusTap=1;
+        vv.addEventListener("click", function(){
+          applyFastFocus(track, true); // force single-shot + kembali continuous
+          toast("Refocus");
+        });
+        // Touch juga (mobile)
+        vv.addEventListener("touchend", function(e){
+          e.preventDefault();
+          applyFastFocus(track, true);
+          toast("Refocus");
+        }, {passive:false});
+      }
+    }catch(e){}
+    if(scanTimer) clearInterval(scanTimer);
+    scanTimer=setInterval(tickScan, 50);
+  }).catch(function(err){
+    // fallback resolusi lebih rendah (Redmi 9 aman di 960x540)
+    navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{ facingMode:{ ideal:"environment" }, width:{ ideal:960 }, height:{ ideal:540 }, frameRate:{ ideal:24 } }
+    }).then(function(s){
+      stream=s;
+      var v=document.getElementById("video");
+      v.srcObject=s;
+      v.setAttribute("playsinline","true");
+      v.muted=true;
+      var playP=v.play();
+      if(playP && playP.catch) playP.catch(function(){});
+      track=s.getVideoTracks()[0]||null;
+      applyFastFocus(track);
+      setTimeout(function(){ applyFastFocus(track, true); }, 400);
+      setTimeout(function(){ applyFastFocus(track); }, 900);
+      initZxReader();
+      initZxReader1D();
+      initNativeDetector();
+      document.getElementById("status").textContent="Arahkan ke barcode...";
+      if(scanTimer) clearInterval(scanTimer);
+      scanTimer=setInterval(tickScan, 50);
+    }).catch(function(err2){
+      console.error(err2);
+      scanning=0;
+      document.getElementById("btnCam").textContent="Mulai";
+      document.getElementById("status").textContent="Tekan Mulai";
+      toast("Gagal kamera");
+    });
+  });
+}
+
+function stop(silent){
+  scanning=0;
+  if(scanTimer){ clearInterval(scanTimer); scanTimer=null; }
+  if(stream){
+    try{ stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+    stream=null;
+  }
+  track=null;
+  var v=document.getElementById("video");
+  if(v){
+    try{ v.srcObject=null; }catch(e){}
+  }
+  if(!silent){
+    document.getElementById("btnCam").textContent="Mulai";
+    document.getElementById("status").textContent="Berhenti";
+  }
+}
+
+var tickCount=0;
+
+// Naikkan kontras + sedikit sharpen biar garis Code 128 lebih tajam
+function enhanceCanvas(srcCanvas){
+  var w=srcCanvas.width, h=srcCanvas.height;
+  var out=document.createElement("canvas");
+  out.width=w; out.height=h;
+  var ctx=out.getContext("2d", { willReadFrequently:true });
+  ctx.drawImage(srcCanvas, 0, 0);
+  try{
+    var img=ctx.getImageData(0, 0, w, h);
+    var d=img.data;
+    // contrast boost
+    var factor=1.45;
+    var intercept=128*(1-factor);
+    for(var i=0;i<d.length;i+=4){
+      var g=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+      // threshold soft biar bar lebih hitam/putih
+      var v=g*factor+intercept;
+      if(v<90) v=0;
+      else if(v>165) v=255;
+      v=v<0?0:v>255?255:v;
+      d[i]=d[i+1]=d[i+2]=v;
+    }
+    ctx.putImageData(img, 0, 0);
+  }catch(e){}
+  return out;
+}
+
+function decodeOnce(reader, source){
+  if(!reader || !source) return null;
+  try{
+    var bb=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(source));
+    return reader.decode(bb);
+  }catch(e){
+    try{ reader.reset(); }catch(e2){}
+    try{
+      var bb2=new ZXing.BinaryBitmap(new ZXing.GlobalHistogramBinarizer(source));
+      return reader.decode(bb2);
+    }catch(e3){
+      try{ reader.reset(); }catch(e4){}
+      return null;
+    }
+  }
+}
+
+function decodeCode128Direct(source){
+  try{
+    var r=initCode128Reader();
+    if(!r) return null;
+    var bb=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(source));
+    return r.decode(bb);
+  }catch(e){
+    try{
+      var r2=initCode128Reader();
+      if(!r2) return null;
+      var bb2=new ZXing.BinaryBitmap(new ZXing.GlobalHistogramBinarizer(source));
+      return r2.decode(bb2);
+    }catch(e2){ return null; }
+  }
+}
+
+function tryAllReaders(source){
+  var result=null;
+  // 1) Code128 native — paling akurat utk resi SPX/J&T
+  result=decodeCode128Direct(source);
+  if(result) return result;
+  // 2) MultiFormat 1D
+  result=decodeOnce(initZxReader1D(), source);
+  if(result) return result;
+  // 3) invert
+  try{
+    var inv=source.invert();
+    result=decodeCode128Direct(inv);
+    if(result) return result;
+    result=decodeOnce(initZxReader1D(), inv);
+  }catch(e){}
+  return result;
+}
+
+function tickScan(){
+  if(!scanning) return;
+  var v=document.getElementById("video");
+  var canvas=document.getElementById("scanCanvas");
+  if(!v || !canvas || v.readyState<2) return;
+
+  var w=v.videoWidth, h=v.videoHeight;
+  if(!w || !h) return;
+
+  tickCount++;
+
+  // Redmi 9 / budget: pulse single-shot tiap ~1.2s, continuous tiap 0.6s
+  if(tickCount%12===0 && track){
+    try{
+      // Setiap 24 tick (~1.2s) pakai force single-shot biar AF re-lock
+      applyFastFocus(track, tickCount%24===0);
+    }catch(e){}
+  }
+
+  // ===== 1) NATIVE BarcodeDetector (QR + format yg support) — super cepat =====
+  if(nativeDet && !bdBusy){
+    bdBusy=1;
+    nativeDet.detect(v).then(function(codes){
+      bdBusy=0;
+      if(!scanning || !codes || !codes.length) return;
+      var c=codes[0];
+      var raw=(c.rawValue||"").trim();
+      if(raw) onScan(raw, c.format||"code");
+    }).catch(function(){ bdBusy=0; });
+  }
+
+  // Canvas scale — 800px balance speed/akurasi Code128
+  var maxW=800;
+  var scale=w>maxW ? maxW/w : 1;
+  var cw=Math.floor(w*scale);
+  var ch=Math.floor(h*scale);
+  canvas.width=cw;
+  canvas.height=ch;
+  var ctx=canvas.getContext("2d", { willReadFrequently:true });
+  ctx.drawImage(v, 0, 0, cw, ch);
+
+  if(tickCount%15===0){
+    document.getElementById("status").textContent="Sedang scan... ("+tickCount+")";
+  }
+
+  var result=null;
+
+  // ===== 2) Code 128: 2 strip per tick (tinggi sensitivitas) =====
+  var ratios=[0.18, 0.26, 0.34, 0.42];
+  var yShifts=[0, -0.08, 0.08, -0.16, 0.16, -0.24, 0.24];
+  for(var s=0; s<2 && !result; s++){
+    try{
+      var ri=(tickCount+s) % ratios.length;
+      var yi=(tickCount*2+s) % yShifts.length;
+      var stripH=Math.max(48, Math.floor(ch*ratios[ri]));
+      var stripY=Math.floor((ch-stripH)/2 + ch*yShifts[yi]);
+      stripY=Math.max(0, Math.min(ch-stripH, stripY));
+
+      var cStrip=document.createElement("canvas");
+      cStrip.width=cw;
+      cStrip.height=stripH;
+      cStrip.getContext("2d").drawImage(canvas, 0, stripY, cw, stripH, 0, 0, cw, stripH);
+
+      // enhance tiap strip ganjil, plain di genap (bergiliran)
+      var src=(tickCount+s)%2===0 ? enhanceCanvas(cStrip) : cStrip;
+      var ls=new ZXing.HTMLCanvasElementLuminanceSource(src);
+      result=tryAllReaders(ls);
+    }catch(e){}
+  }
+
+  // ===== 3) Full frame QR + fallback — tiap 2 tick =====
+  if(!result && tickCount%2===0){
+    try{
+      var srcF=(tickCount%4===0) ? enhanceCanvas(canvas) : canvas;
+      var lsF=new ZXing.HTMLCanvasElementLuminanceSource(srcF);
+      result=tryAllReaders(lsF);
+      if(!result){
+        result=decodeOnce(initZxReader(), lsF);
+      }
+      if(!result){
+        try{
+          var inv=lsF.invert();
+          result=decodeOnce(initZxReader(), inv);
+        }catch(e){}
+      }
+    }catch(e){}
+  }
+
+  if(result){
+    var raw="";
+    try{ raw=(result.getText && result.getText()) || result.text || ""; }catch(e){ raw=result.text||""; }
+    raw=(raw||"").trim();
+    if(raw){
+      var fmt="code";
+      try{
+        if(result.getBarcodeFormat) fmt=String(result.getBarcodeFormat());
+        else if(result.format) fmt=String(result.format);
+      }catch(e){}
+      onScan(raw, fmt);
+    }
+  }
+}
+
+function inputManual(){
+  var el=document.getElementById("manualId");
+  var raw=(el.value||"").trim();
+  if(!raw){
+    toast("Isi ID dulu");
+    return;
+  }
+  if(!cats.length){
+    toast("Tambah toko dulu");
+    return;
+  }
+  // Reuse alur yang sama dengan hasil scan
+  onScan(raw, "manual");
+  el.value="";
+  el.blur();
+}
+
+function onScan(raw, fmt){
+  var now=Date.now();
+  if(set.anti){
+    if(raw==last && now-lastT<1500) return;
+    var exists=0;
+    for(var i=0;i<scans.length;i++){ if(scans[i].id==raw){ exists=1; break; } }
+    if(!exists) for(var i=0;i<riwayat.length;i++){ if(riwayat[i].id==raw){ exists=1; break; } }
+    if(exists){
+      document.getElementById("status").textContent="Sudah ada";
+      toast("ID sudah ada");
+      buzz(0);
+      last=raw; lastT=now;
+      if(mode=="once") stop();
+      return;
+    }
+  }
+  last=raw; lastT=now;
+
+  // Pause loop saat modal
+  if(scanTimer){ clearInterval(scanTimer); scanTimer=null; }
+
+  pending={id:raw,type:fmt,ts:now};
+  openModal(raw);
+  if(mode=="once") stop();
+}
+
+function openModal(id){
+  document.getElementById("modalId").textContent=id;
+  var box=document.getElementById("modalCat");
+  box.innerHTML="";
+  for(var i=0;i<cats.length;i++){
+    var b=document.createElement("button");
+    b.className="cat";
+    b.textContent=cats[i];
+    b.setAttribute("data-c",cats[i]);
+    b.onclick=function(){ pick(this.getAttribute("data-c")); };
+    box.appendChild(b);
+  }
+  document.getElementById("modal").className="modal on";
+  buzz(1);
+}
+
+function closeModal(){
+  document.getElementById("modal").className="modal";
+  pending=null;
+  if(scanning && mode=="fast") resumeScan();
+}
+
+function pick(cat){
+  if(!pending) return;
+  pending.cat=cat;
+  scans.unshift(pending);
+  save();
+  toast("Masuk: "+cat);
+  document.getElementById("status").textContent="OK: "+cat;
+  pending=null;
+  document.getElementById("modal").className="modal";
+  if(scanning && mode=="fast") resumeScan();
+}
+
+function resumeScan(){
+  if(!scanning) return;
+  document.getElementById("status").textContent="Arahkan ke barcode...";
+  if(!scanTimer) scanTimer=setInterval(tickScan, 50);
+}
+
+function flash(){
+  if(!track){
+    try{
+      var v=document.getElementById("video");
+      if(v && v.srcObject) track=v.srcObject.getVideoTracks()[0];
+    }catch(e){}
+  }
+  if(!track){ toast("Kamera belum siap"); return; }
+  try{
+    var c=track.getCapabilities ? track.getCapabilities() : {};
+    if(!c.torch){ toast("No flash"); return; }
+    torchOn=!torchOn;
+    track.applyConstraints({advanced:[{torch:torchOn}]});
+  }catch(e){ toast("Flash error"); }
+}
+
+function zoom(){
+  if(!track){
+    try{
+      var v=document.getElementById("video");
+      if(v && v.srcObject) track=v.srcObject.getVideoTracks()[0];
+    }catch(e){}
+  }
+  if(!track){ toast("Kamera belum siap"); return; }
+  try{
+    var c=track.getCapabilities ? track.getCapabilities() : {};
+    if(!c.zoom){ toast("No zoom"); return; }
+    var mn=c.zoom.min||1, mx=c.zoom.max||3;
+    zoomLv=zoomLv>=mx?mn:Math.min(mx,zoomLv+0.5);
+    track.applyConstraints({advanced:[{zoom:zoomLv}]});
+  }catch(e){ toast("Zoom error"); }
+}
+
+function cari(){
+  var q=(document.getElementById("q").value||"").toLowerCase().trim();
+  var box=document.getElementById("hasilCari"), h="";
+  if(!q){ box.innerHTML=""; return; }
+  // Cari di Home + Riwayat + Recycle Bin
+  function addHit(s, lokasi){
+    var meta=tgl(s.ts)+" · "+lokasi+(s.cat?" · "+s.cat:"");
+    h+="<div class='id-row'>";
+    h+="<div class='txt'>"+esc(s.id)+"<small>"+esc(meta)+"</small></div>";
+    h+="<button type='button' class='cp' onclick=\"copyText('"+escAttr(s.id)+"')\">Salin</button>";
+    h+="</div>";
+  }
+  var hits=0;
+  for(var i=0;i<scans.length;i++){
+    if(scans[i].id.toLowerCase().indexOf(q)>=0){ addHit(scans[i],"Home"); hits++; }
+  }
+  for(var i=0;i<riwayat.length;i++){
+    if(riwayat[i].id.toLowerCase().indexOf(q)>=0){ addHit(riwayat[i],"Riwayat"); hits++; }
+  }
+  for(var i=0;i<recycle.length;i++){
+    if(recycle[i].id.toLowerCase().indexOf(q)>=0){ addHit(recycle[i],"Recycle"); hits++; }
+  }
+  if(!hits){
+    box.innerHTML="<div class='muted' style='padding:12px;text-align:center'>Tidak ditemukan</div>";
+  } else {
+    box.innerHTML="<div class='card' style='padding:6px 10px;margin-top:10px'>"+h+"</div>";
+  }
+}
+
+function item(s, del){
+  var meta=tgl(s.ts)+(s.cat?" · "+s.cat:"");
+  var h="<div class='id-row'>";
+  h+="<div class='txt'>"+esc(s.id)+"<small>"+esc(meta)+"</small></div>";
+  h+="<button type='button' class='cp' onclick=\"copyText('"+escAttr(s.id)+"')\">Salin</button>";
+  if(del) h+="<button type='button' class='del' onclick='del("+s.ts+")'>Hapus</button>";
+  h+="</div>";
+  return h;
+}
+
+function fill(){
+  // Hanya isi filter Share (filter Riwayat sudah dihapus)
+  var b=document.getElementById("sCat");
+  if(!b) return;
+  var vb=b.value;
+  b.innerHTML="";
+  var o0=document.createElement("option");
+  o0.value="";
+  o0.textContent="Semua Toko";
+  b.appendChild(o0);
+  for(var i=0;i<cats.length;i++){
+    var o=document.createElement("option");
+    o.value=cats[i];
+    o.textContent=cats[i];
+    b.appendChild(o);
+  }
+  b.value=vb;
+  if(vb && b.value!==vb) b.value="";
+}
+function hist(){
+  var h="";
+  for(var i=0;i<riwayat.length;i++){
+    h+=item(riwayat[i],1);
+  }
+  var box=document.getElementById("hasilHist");
+  if(!riwayat.length){
+    box.innerHTML="<div class='muted' style='padding:20px;text-align:center;font-size:13px'>Kosong</div>";
+  } else {
+    box.innerHTML="<div class='card' style='padding:6px 10px'>"+h+"</div>";
+  }
+}
+
+function del(ts){
+  // Hapus dari Riwayat → Recycle
+  for(var i=0;i<riwayat.length;i++){
+    if(riwayat[i].ts==ts){ recycle.unshift(riwayat[i]); riwayat.splice(i,1); break; }
+  }
+  save(); hist(); toast("Ke recycle");
+}
+
+function delHome(ts){
+  // Hapus dari Home → langsung Recycle (tidak masuk Riwayat)
+  for(var i=0;i<scans.length;i++){
+    if(scans[i].ts==ts){ recycle.unshift(scans[i]); scans.splice(i,1); break; }
+  }
+  save();
+  refreshTokoOrHome();
+  toast("Ke recycle");
+}
+
+function hapusSemua(){
+  // Hapus semua di Riwayat → langsung ke Recycle Bin
+  if(!riwayat.length){ toast("Riwayat kosong"); return; }
+  showAppConfirm(
+    "🗑 Hapus Semua",
+    "Pindah semua ID Riwayat ke Recycle Bin?",
+    function(){
+      recycle=riwayat.concat(recycle);
+      riwayat=[];
+      save();
+      hist();
+      toast("Semua ke Recycle Bin");
+    }
+  );
+}
+
+// ID di Home yang bukan hari ini otomatis pindah ke Riwayat
+function dayKey(ts){
+  var d=new Date(ts);
+  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+}
+function moveOldScansToRiwayat(){
+  if(!scans.length) return 0;
+  var today=dayKey(Date.now());
+  var keep=[], moved=0;
+  for(var i=0;i<scans.length;i++){
+    if(dayKey(scans[i].ts)===today){
+      keep.push(scans[i]);
+    } else {
+      riwayat.unshift(scans[i]);
+      moved++;
+    }
+  }
+  if(moved){
+    scans=keep;
+    save();
+  }
+  return moved;
+}
+
+function rec(){
+  var box=document.getElementById("hasilRec");
+  var btnKosong=document.getElementById("btnKosongRec");
+  if(!recycle.length){
+    if(btnKosong) btnKosong.style.display="none";
+    box.innerHTML="<div class='muted' style='padding:20px;text-align:center'>Kosong</div>";
+    return;
+  }
+  if(btnKosong) btnKosong.style.display="inline-block";
+  var h="<div class='card' style='padding:6px 10px'>";
+  for(var i=0;i<recycle.length;i++){
+    var s=recycle[i];
+    h+="<div class='id-row'>";
+    h+="<div class='txt'>"+esc(s.id)+"<small>"+tgl(s.ts)+(s.cat?" · "+esc(s.cat):"")+"</small></div>";
+    h+="<button type='button' class='cp' style='background:#334155' onclick='balik("+s.ts+")'>Balik</button>";
+    h+="<button type='button' class='del' onclick='buang("+s.ts+")'>Hapus</button>";
+    h+="</div>";
+  }
+  h+="</div>";
+  box.innerHTML=h;
+}
+
+function balik(ts){
+  // Pulihkan ke Riwayat
+  for(var i=0;i<recycle.length;i++){
+    if(recycle[i].ts==ts){ riwayat.unshift(recycle[i]); recycle.splice(i,1); break; }
+  }
+  save(); rec(); toast("Dipulihkan");
+}
+
+function buang(ts){
+  var n=[];
+  for(var i=0;i<recycle.length;i++) if(recycle[i].ts!=ts) n.push(recycle[i]);
+  recycle=n; save(); rec(); toast("Dihapus");
+}
+
+function kosong(){
+  showAppConfirm(
+    "🗑 Kosongkan Recycle",
+    "Hapus permanen semua ID di Recycle Bin?",
+    function(){
+      recycle=[]; save(); rec(); toast("Kosong");
+    }
+  );
+}
+
+function dataShareGrouped(){
+  // Share dari Home — dikelompokkan per toko (urutan sesuai daftar cats)
+  var sel=document.getElementById("sCat");
+  var cat=sel?(sel.value||"").trim():"";
+  var groups=[]; // [{name, items:[]}, ...]
+
+  function pushGroup(name, items){
+    if(items.length) groups.push({name:name, items:items});
+  }
+
+  if(cat){
+    // Satu toko saja
+    var items=[];
+    for(var i=0;i<scans.length;i++){
+      if((scans[i].cat||"").trim()===cat) items.push(scans[i]);
+    }
+    pushGroup(cat, items);
+  } else {
+    // Semua toko — urut sesuai cats
+    var map={};
+    for(var k=0;k<cats.length;k++) map[cats[k]]=[];
+    var other=[];
+    for(var j=0;j<scans.length;j++){
+      var c=(scans[j].cat||"").trim();
+      if(c && map[c]) map[c].push(scans[j]);
+      else other.push(scans[j]);
+    }
+    for(var m=0;m<cats.length;m++) pushGroup(cats[m], map[cats[m]]||[]);
+    if(other.length) pushGroup("Lainnya", other);
+  }
+  return groups;
+}
+
+function dataShare(){
+  // Flat list (urut per toko) — untuk kompatibilitas
+  var groups=dataShareGrouped();
+  var r=[];
+  for(var i=0;i<groups.length;i++){
+    for(var j=0;j<groups[i].items.length;j++) r.push(groups[i].items[j]);
+  }
+  return r;
+}
+
+function sharePreview(){
+  var groups=dataShareGrouped();
+  var total=0;
+  for(var g=0;g<groups.length;g++) total+=groups[g].items.length;
+  var cnt=document.getElementById("shareCount");
+  var box=document.getElementById("hasilShare");
+  if(cnt) cnt.textContent=String(total);
+  if(!box) return;
+  if(!total){
+    box.innerHTML="<div class='muted' style='padding:16px;text-align:center;font-size:13px'>Kosong — tidak ada ID untuk dibagikan</div>";
+    return;
+  }
+  var h="";
+  for(var i=0;i<groups.length;i++){
+    var gr=groups[i];
+    h+="<div class='toko' style='margin-bottom:10px'>";
+    h+="<div class='toko-h'><div><b style='font-size:13px'>"+esc(gr.name)+"</b></div><span class='cnt'>"+gr.items.length+"</span></div>";
+    h+="<div class='toko-b'>";
+    for(var j=0;j<gr.items.length;j++){
+      var s=gr.items[j];
+      h+="<div class='id-row'><div class='txt'>"+esc(s.id)+"<small>"+tgl(s.ts)+"</small></div></div>";
+    }
+    h+="</div></div>";
+  }
+  box.innerHTML=h;
+}
+
+function wa(){
+  var groups=dataShareGrouped();
+  var total=0;
+  for(var g=0;g<groups.length;g++) total+=groups[g].items.length;
+  if(!total){ toast("Kosong"); return; }
+
+  var t="SPX FM HUB PENJARINGAN 12%0A";
+  t+="Total Paket Retur ("+total+")%0A%0A";
+  for(var i=0;i<groups.length;i++){
+    var gr=groups[i];
+    if(!gr.items.length) continue;
+    t+=encodeURIComponent(gr.name)+" :%0A";
+    for(var j=0;j<gr.items.length;j++){
+      t+=(j+1)+". "+encodeURIComponent(gr.items[j].id)+"%0A";
+    }
+    t+="%0A";
+  }
+  window.open("https://wa.me/?text="+t,"_blank");
+}
+
+function txt(){
+  var groups=dataShareGrouped();
+  var total=0;
+  for(var g=0;g<groups.length;g++) total+=groups[g].items.length;
+  if(!total){ toast("Kosong"); return; }
+
+  // Nama file: Scan DD.MM.YYYY.csv
+  var now=new Date();
+  var dd=("0"+now.getDate()).slice(-2);
+  var mm=("0"+(now.getMonth()+1)).slice(-2);
+  var yyyy=now.getFullYear();
+  var tglStr=dd+"."+mm+"."+yyyy;
+  var fileName="Scan "+tglStr+".csv";
+
+  var t="[ SPX Penjaringan 12 ] "+tglStr+"\n";
+  t+="Total Paket Retur: "+total+"\n\n";
+  for(var i=0;i<groups.length;i++){
+    var gr=groups[i];
+    if(!gr.items.length) continue;
+    t+=" "+gr.name+"\n";
+    for(var j=0;j<gr.items.length;j++){
+      t+=(j+1)+". "+gr.items[j].id+"\n";
+    }
+    t+="\n";
+  }
+  // Browser mengunduh ke folder Download/Documents (tergantung HP)
+  unduh(fileName,t,"text/csv;charset=utf-8");
+  toast("Tersimpan: "+fileName);
+}
+  function unduh(n,c,t){
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([c],{type:t}));
+  a.download=n; a.click();
+}
+
+function backup(){
+  unduh("backup.json",JSON.stringify({scans:scans,riwayat:riwayat,recycle:recycle,cats:cats,set:set},null,2),"application/json");
+  toast("Backup OK");
+}
+
+function restore(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var d=JSON.parse(r.result);
+      if(d.scans) scans=d.scans;
+      if(d.riwayat) riwayat=d.riwayat;
+      if(d.recycle) recycle=d.recycle;
+      if(d.cats) cats=d.cats;
+      if(d.set) set=d.set;
+      save(); sw(); fill(); perToko(); toast("Restore OK");
+    }catch(err){ toast("File invalid"); }
+  };
+  r.readAsText(f); e.target.value="";
+}
+
+function listToko(){
+  var box=document.getElementById("listCat"), h="";
+  if(!cats.length){
+    box.innerHTML="<div class='muted' style='padding:8px 0;font-size:13px'>Belum ada toko</div>";
+    return;
+  }
+  for(var i=0;i<cats.length;i++){
+    h+="<div class='id-row'>";
+    h+="<div class='txt' style='font-size:13px'>"+esc(cats[i])+"</div>";
+    h+="<button type='button' class='del' onclick='delCat("+i+")'>Hapus</button>";
+    h+="</div>";
+  }
+  box.innerHTML=h;
+}
+
+function addCat(){
+  var n=(document.getElementById("newCat").value||"").trim();
+  if(!n){ toast("Isi nama"); return; }
+  if(cats.indexOf(n)>=0){ toast("Sudah ada"); return; }
+  cats.push(n); save();
+  document.getElementById("newCat").value="";
+  listToko(); fill(); toast("Ditambah");
+}
+
+function delCat(i){
+  var name=cats[i]||"toko";
+  showAppConfirm(
+    "🗑 Hapus Toko",
+    "Yakin ingin menghapus toko \""+name+"\"?",
+    function(){
+      cats.splice(i,1); save(); listToko(); fill(); toast("Dihapus");
+    }
+  );
+}
+
+function tog(k){
+  set[k]=set[k]?0:1; save(); sw();
+}
+
+function sw(){
+  document.getElementById("sSound").textContent=set.sound?"ON":"OFF";
+  document.getElementById("sVibrate").textContent=set.vibrate?"ON":"OFF";
+  document.getElementById("sAnti").textContent=set.anti?"ON":"OFF";
+}
+
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escAttr(s){ return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'"); }
+function tgl(ts){ return new Date(ts).toLocaleString("id-ID",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}); }
+
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js").catch(function(){});
+}
+// ===========================
+// FOTO
+// ===========================
+
+function setPhotoGalleryVisible(show){
+  var gal=document.getElementById("gallery");
+  var lab=document.getElementById("photoGalleryLabel");
+  var sc=document.getElementById("photoStartCard");
+  if(gal) gal.style.display=show?"grid":"none";
+  if(lab) lab.style.display=show?"block":"none";
+  if(sc) sc.style.display=show?"block":"none";
+}
+
+function applyPhotoCameraQuality(tr){
+  if(!tr || !tr.applyConstraints) return;
+  try{
+    var caps=tr.getCapabilities?tr.getCapabilities():{};
+    var adv=[];
+    // Continuous AF + exposure + WB agar tajam & tidak gelap
+    if(caps.focusMode && caps.focusMode.indexOf && caps.focusMode.indexOf("continuous")>=0){
+      adv.push({focusMode:"continuous"});
+    }
+    if(caps.exposureMode && caps.exposureMode.indexOf && caps.exposureMode.indexOf("continuous")>=0){
+      adv.push({exposureMode:"continuous"});
+    }
+    if(caps.whiteBalanceMode && caps.whiteBalanceMode.indexOf && caps.whiteBalanceMode.indexOf("continuous")>=0){
+      adv.push({whiteBalanceMode:"continuous"});
+    }
+    if(caps.pointsOfInterest){
+      adv.push({pointsOfInterest:[{x:0.5,y:0.5}]});
+    }
+    // Sedikit naikkan exposure compensation biar tidak gelap (kalau support)
+    if(caps.exposureCompensation){
+      var ec=caps.exposureCompensation;
+      var boost=0.3;
+      if(typeof ec.min==="number" && typeof ec.max==="number"){
+        boost=Math.max(ec.min, Math.min(ec.max, 0.4));
+        adv.push({exposureCompensation:boost});
+      }
+    }
+    // Brightness / contrast kalau ada
+    if(caps.brightness && typeof caps.brightness.max==="number"){
+      var br=caps.brightness;
+      var mid=typeof br.min==="number"? (br.min+br.max)/2 : br.max*0.55;
+      adv.push({brightness:mid});
+    }
+    if(caps.sharpness && typeof caps.sharpness.max==="number"){
+      var sh=caps.sharpness;
+      var sharp=typeof sh.min==="number"? sh.min+(sh.max-sh.min)*0.7 : sh.max*0.7;
+      adv.push({sharpness:sharp});
+    }
+    if(adv.length){
+      tr.applyConstraints({advanced:adv}).catch(function(){});
+    }
+    // Plain constraints fallback
+    var plain={};
+    if(caps.focusMode && caps.focusMode.indexOf && caps.focusMode.indexOf("continuous")>=0){
+      plain.focusMode="continuous";
+    }
+    if(Object.keys(plain).length){
+      tr.applyConstraints(plain).catch(function(){});
+    }
+  }catch(e){}
+}
+
+async function openCamera(){
+  startLocationWatch();
+  updateLocation(true);
+  // UI dulu biar terasa cepat — galeri disembunyikan
+  document.getElementById("cameraBox").style.display="block";
+  setPhotoGalleryVisible(false);
+
+  var v=document.getElementById("photoVideo");
+  if(v){
+    v.setAttribute("playsinline","true");
+    v.setAttribute("muted","true");
+    v.muted=true;
+  }
+
+  // Constraints kualitas tinggi
+  var constraints={
+    audio:false,
+    video:{
+      facingMode:{ideal:"environment"},
+      width:{ideal:1920, min:1280},
+      height:{ideal:1080, min:720},
+      frameRate:{ideal:30, min:15},
+      // Advanced ideal (browser yang support)
+      focusMode:{ideal:"continuous"},
+      exposureMode:{ideal:"continuous"},
+      whiteBalanceMode:{ideal:"continuous"}
+    }
+  };
+
+  try{
+    photoStream=await navigator.mediaDevices.getUserMedia(constraints);
+  }catch(e1){
+    // Fallback resolusi menengah
+    try{
+      photoStream=await navigator.mediaDevices.getUserMedia({
+        audio:false,
+        video:{
+          facingMode:{ideal:"environment"},
+          width:{ideal:1280},
+          height:{ideal:720},
+          frameRate:{ideal:30}
+        }
+      });
+    }catch(e2){
+      // Fallback minimal
+      try{
+        photoStream=await navigator.mediaDevices.getUserMedia({
+          audio:false,
+          video:{facingMode:"environment"}
+        });
+      }catch(e3){
+        document.getElementById("cameraBox").style.display="none";
+        setPhotoGalleryVisible(true);
+        toast("Tidak bisa membuka kamera");
+        return;
+      }
+    }
+  }
+
+  try{
+    if(v){
+      v.srcObject=photoStream;
+      var playP=v.play();
+      if(playP && playP.catch) playP.catch(function(){});
+    }
+    photoTrack=photoStream.getVideoTracks()[0]||null;
+    applyPhotoCameraQuality(photoTrack);
+    // Re-apply setelah stream stabil
+    setTimeout(function(){ applyPhotoCameraQuality(photoTrack); }, 300);
+    setTimeout(function(){ applyPhotoCameraQuality(photoTrack); }, 800);
+    updateLocation(true);
+  }catch(e){
+    toast("Tidak bisa membuka kamera");
+    closeCamera();
+  }
+}
+
+function closeCamera(){
+  stopLocationWatch();
+  if(photoStream){
+    try{
+      photoStream.getTracks().forEach(function(t){ t.stop(); });
+    }catch(e){}
+    photoStream=null;
+  }
+  photoTrack=null;
+  var v=document.getElementById("photoVideo");
+  if(v){
+    try{ v.srcObject=null; }catch(e){}
+  }
+  document.getElementById("cameraBox").style.display="none";
+  setPhotoGalleryVisible(true);
+}
+
+function playShutterSound(){
+  try{
+    var ctx=new (window.AudioContext||window.webkitAudioContext)();
+    var now=ctx.currentTime;
+    var bufferSize=Math.floor(ctx.sampleRate*0.06);
+    var buffer=ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    var data=buffer.getChannelData(0);
+    for(var i=0;i<bufferSize;i++){
+      var t=i/bufferSize;
+      var env=Math.exp(-t*28);
+      data[i]=(Math.random()*2-1)*env*0.55;
+    }
+    var noise=ctx.createBufferSource();
+    noise.buffer=buffer;
+    var ng=ctx.createGain();
+    ng.gain.setValueAtTime(0.7, now);
+    ng.gain.exponentialRampToValueAtTime(0.001, now+0.08);
+    noise.connect(ng); ng.connect(ctx.destination);
+    noise.start(now);
+    var o=ctx.createOscillator();
+    var g=ctx.createGain();
+    o.type="square";
+    o.frequency.setValueAtTime(1800, now);
+    o.frequency.exponentialRampToValueAtTime(400, now+0.05);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.45, now+0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, now+0.07);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(now);
+    o.stop(now+0.09);
+    setTimeout(function(){ try{ ctx.close(); }catch(e){} }, 300);
+  }catch(e){}
+}
+
+async function takePhoto(){
+
+var video=document.getElementById("photoVideo");
+
+var canvas=document.getElementById("photoCanvas");
+
+canvas.width=video.videoWidth;
+
+canvas.height=video.videoHeight;
+
+var ctx=canvas.getContext("2d");
+
+ctx.drawImage(video,0,0);
+
+playShutterSound();
+if(set.vibrate && navigator.vibrate) try{ navigator.vibrate(40); }catch(e){}
+
+var lokasi=typeof ensureLocationForPhoto==="function" ? await ensureLocationForPhoto() : currentLocation;
+
+var now=new Date();
+
+var hari=[
+"Minggu",
+"Senin",
+"Selasa",
+"Rabu",
+"Kamis",
+"Jumat",
+"Sabtu"
+];
+
+var tanggal=
+hari[now.getDay()]+" | "+
+now.toLocaleDateString("id-ID")+" | "+
+now.toLocaleTimeString("id-ID");
+
+var scale=Math.max(1, canvas.width/1080);
+var pad=Math.round(22*scale);
+var barH=Math.round(320*scale);
+var titleSize=Math.round(36*scale);
+var dateSize=Math.round(32*scale);
+var locSize=Math.round(38*scale);
+var lineH=Math.round(46*scale);
+
+ctx.fillStyle="rgba(0,0,0,.60)";
+ctx.fillRect(0, canvas.height-barH, canvas.width, barH);
+
+ctx.fillStyle="#ffffff";
+ctx.font="bold "+titleSize+"px sans-serif";
+ctx.fillText("FM HUB PENJARINGAN 12", pad, canvas.height-barH+Math.round(48*scale));
+
+ctx.fillStyle="#ffffff";
+ctx.font="bold "+dateSize+"px sans-serif";
+ctx.fillText(tanggal, pad, canvas.height-barH+Math.round(100*scale));
+
+ctx.fillStyle="#ffffff";
+ctx.font="bold "+locSize+"px sans-serif";
+wrapText(ctx, lokasi, pad, canvas.height-barH+Math.round(155*scale), canvas.width-pad*2, lineH);
+
+var img=canvas.toDataURL("image/jpeg", 0.92);
+
+savePhoto({
+image:img,
+time:Date.now(),
+lokasi:lokasi
+});
+
+toast("Foto berhasil disimpan");
+
+}
+
+  function wrapText(ctx,text,x,y,maxWidth,lineHeight){
+
+var words=text.split(" ");
+var line="";
+
+for(var n=0;n<words.length;n++){
+
+var testLine=line+words[n]+" ";
+var testWidth=ctx.measureText(testLine).width;
+
+if(testWidth>maxWidth && n>0){
+
+ctx.fillText(line,x,y);
+
+line=words[n]+" ";
+
+y+=lineHeight;
+
+}else{
+
+line=testLine;
+
+}
+
+}
+
+ctx.fillText(line,x,y);
+
+  }
+function isLocationReady(txt){
+  if(!txt) return false;
+  var t=String(txt);
+  if(t==="Mencari lokasi..." || t==="Mencari alamat..." || t==="Lokasi tidak tersedia") return false;
+  return true;
+}
+
+function setLocationText(txt){
+  if(!txt) return;
+  currentLocation=txt;
+  currentAddress=txt;
+  if(isLocationReady(txt)) lastGoodLocation=txt;
+}
+
+async function reverseGeocode(lat, lng){
+  if(!navigator.onLine) return lat.toFixed(6)+", "+lng.toFixed(6);
+  try{
+    var controller=new AbortController();
+    var timer=setTimeout(function(){ controller.abort(); }, 2500);
+    var url="https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng+"&zoom=18&addressdetails=1&accept-language=id";
+    var r=await fetch(url,{signal:controller.signal,headers:{"Accept":"application/json","Accept-Language":"id"}});
+    clearTimeout(timer);
+    if(!r.ok) throw new Error("geo http");
+    var j=await r.json();
+    if(j && j.display_name) return j.display_name;
+  }catch(e){}
+  return lat.toFixed(6)+", "+lng.toFixed(6);
+}
+
+function getPositionOnce(options){
+  return new Promise(function(resolve, reject){
+    if(!navigator.geolocation){ reject(new Error("no geo")); return; }
+    navigator.geolocation.getCurrentPosition(resolve, reject, options||{});
+  });
+}
+
+async function getLocationText(forceFresh){
+  if(!navigator.geolocation) return "Lokasi tidak tersedia";
+  try{
+    var posFast=await getPositionOnce({enableHighAccuracy:false,timeout:2000,maximumAge:forceFresh?0:60000});
+    setLocationText(await reverseGeocode(posFast.coords.latitude, posFast.coords.longitude));
+  }catch(e){}
+  try{
+    var pos=await getPositionOnce({enableHighAccuracy:true,timeout:8000,maximumAge:forceFresh?0:15000});
+    var addr=await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+    setLocationText(addr);
+    return addr;
+  }catch(e){
+    if(isLocationReady(currentLocation)) return currentLocation;
+    if(lastGoodLocation) return lastGoodLocation;
+    return "Lokasi tidak tersedia";
+  }
+}
+
+function prefetchLocation(){
+  if(isLocationReady(currentLocation) && lastGoodLocation) return;
+  updateLocation(false);
+}
+
+async function updateLocation(forceFresh){
+  if(locationBusy && !forceFresh) return locationPromise;
+  locationBusy=1;
+  locationPromise=(async function(){
+    try{
+      setLocationText(await getLocationText(!!forceFresh));
+      console.log("Lokasi:", currentLocation);
+    }catch(e){
+      if(!isLocationReady(currentLocation)) currentLocation=lastGoodLocation||"Lokasi tidak tersedia";
+    }finally{ locationBusy=0; }
+    return currentLocation;
+  })();
+  return locationPromise;
+}
+
+function startLocationWatch(){
+  if(!navigator.geolocation || locationWatchId!=null) return;
+  try{
+    locationWatchId=navigator.geolocation.watchPosition(function(pos){
+      var lat=pos.coords.latitude, lng=pos.coords.longitude;
+      if(!isLocationReady(currentLocation)) setLocationText(lat.toFixed(6)+", "+lng.toFixed(6));
+      reverseGeocode(lat,lng).then(setLocationText).catch(function(){});
+    }, function(){}, {enableHighAccuracy:true,timeout:10000,maximumAge:10000});
+  }catch(e){}
+}
+
+function stopLocationWatch(){
+  if(locationWatchId!=null && navigator.geolocation){
+    try{ navigator.geolocation.clearWatch(locationWatchId); }catch(e){}
+  }
+  locationWatchId=null;
+}
+
+async function ensureLocationForPhoto(){
+  if(isLocationReady(currentLocation)) return currentLocation;
+  if(lastGoodLocation){ updateLocation(true); return lastGoodLocation; }
+  try{
+    var raced=await Promise.race([
+      updateLocation(true),
+      new Promise(function(r){ setTimeout(function(){ r(currentLocation); }, 2500); })
+    ]);
+    if(isLocationReady(raced)) return raced;
+    if(isLocationReady(currentLocation)) return currentLocation;
+    if(lastGoodLocation) return lastGoodLocation;
+  }catch(e){}
+  return currentLocation||"Lokasi tidak tersedia";
+}
+
+
+var lpTimer=null, lpId=null, lpMoved=0, lpOpened=0;
+var selectMode=0;
+var selectedIds=[];
+var deletePhotoIds=null; // multi delete
+
+function isSelected(id){ return selectedIds.indexOf(id)>=0; }
+
+function toggleSelect(id){
+  var idx=selectedIds.indexOf(id);
+  if(idx>=0) selectedIds.splice(idx,1);
+  else selectedIds.push(id);
+  updateSelectUI();
+}
+
+function clearSelection(){
+  selectedIds=[]; selectMode=0; lpOpened=0; lpId=null;
+  updateSelectUI(); hideLpDel();
+}
+
+function updateSelectUI(){
+  var items=document.querySelectorAll(".photo-item");
+  for(var i=0;i<items.length;i++){
+    var id=parseInt(items[i].getAttribute("data-id"),10);
+    if(isSelected(id)) items[i].classList.add("selected");
+    else items[i].classList.remove("selected");
+    items[i].classList.remove("lp-active");
+  }
+  if(selectMode && selectedIds.length) showSelectBar();
+  else if(selectMode && !selectedIds.length) clearSelection();
+}
+
+function hideLpDel(){
+  var t=document.getElementById("lpDelToast");
+  if(t) t.className="lp-del-toast";
+}
+
+function showSelectBar(){
+  var t=document.getElementById("lpDelToast");
+  if(!t){
+    t=document.createElement("div");
+    t.id="lpDelToast";
+    t.className="lp-del-toast";
+    t.innerHTML=
+      '<div class="lp-title" id="lpTitle">0 foto dipilih</div>'+
+      '<div class="lp-actions">'+
+        '<button type="button" class="lp-share">Share</button>'+
+        '<button type="button" class="lp-ok">Hapus</button>'+
+        '<button type="button" class="lp-cancel">Batal</button>'+
+      '</div>';
+    document.body.appendChild(t);
+    t.querySelector(".lp-cancel").onclick=function(e){ e.stopPropagation(); clearSelection(); };
+    t.querySelector(".lp-ok").onclick=function(e){ e.stopPropagation(); requestDeleteSelected(); };
+    t.querySelector(".lp-share").onclick=function(e){ e.stopPropagation(); shareSelectedPhotos(); };
+  }
+  var title=document.getElementById("lpTitle");
+  if(title) title.textContent=selectedIds.length+" foto dipilih";
+  t.className="lp-del-toast on";
+  lpOpened=1;
+}
+
+function enterSelectMode(id){
+  selectMode=1;
+  if(selectedIds.indexOf(id)<0) selectedIds.push(id);
+  if(navigator.vibrate) try{ navigator.vibrate(30); }catch(err){}
+  updateSelectUI();
+  showSelectBar();
+}
+
+async function shareSelectedPhotos(){
+  if(!selectedIds.length){ toast("Pilih foto dulu"); return; }
+  try{
+    var files=[];
+    for(var i=0;i<selectedIds.length;i++){
+      var p=null;
+      for(var j=0;j<photos.length;j++){
+        if(photos[j].id==selectedIds[i]){ p=photos[j]; break; }
+      }
+      if(!p||!p.image) continue;
+      var blob=await (await fetch(p.image)).blob();
+      files.push(new File([blob], "SPX_Express_12_"+p.id+".jpg", {type:"image/jpeg"}));
+    }
+    if(!files.length){ toast("Tidak ada foto"); return; }
+    // Pesan WhatsApp kosong — hanya file
+    if(navigator.canShare && navigator.canShare({files:files})){
+      await navigator.share({ files:files });
+      toast("Berhasil dibagikan");
+      clearSelection();
+    } else if(navigator.share && files.length===1){
+      await navigator.share({ files:files });
+      toast("Berhasil dibagikan");
+      clearSelection();
+    } else {
+      toast("Share multi tidak didukung, unduh manual");
+      for(var k=0;k<files.length;k++){
+        var url=URL.createObjectURL(files[k]);
+        var a=document.createElement("a");
+        a.href=url; a.download=files[k].name; a.click();
+        URL.revokeObjectURL(url);
+      }
+    }
+  }catch(e){
+    if(e && e.name==="AbortError") toast("Batal");
+    else toast("Gagal share");
+  }
+}
+
+function requestDeleteSelected(){
+  if(!selectedIds.length){ toast("Pilih foto dulu"); return; }
+  // Pakai popup yang sama dengan hapus single
+  deletePhotoIds=selectedIds.slice();
+  deletePhotoId=null;
+  var title=document.querySelector("#confirmModal h3");
+  var msg=document.querySelector("#confirmModal p");
+  if(title) title.textContent="🗑 Hapus Foto";
+  if(msg) msg.textContent=deletePhotoIds.length===1
+    ? "Yakin ingin menghapus foto ini?"
+    : "Yakin ingin menghapus "+deletePhotoIds.length+" foto ini?";
+  document.getElementById("confirmModal").classList.add("show");
+}
+
+function deleteSelectedPhotos(ids){
+  if(!ids || !ids.length) return;
+  function delNext(i){
+    if(i>=ids.length){ loadPhotos(); toast("Foto dihapus"); return; }
+    if(!photoDB){ delNext(i+1); return; }
+    var tx=photoDB.transaction(["photos"],"readwrite");
+    tx.objectStore("photos").delete(ids[i]);
+    tx.oncomplete=function(){ delNext(i+1); };
+    tx.onerror=function(){ delNext(i+1); };
+  }
+  delNext(0);
+}
+
+function photoDayKey(ts){
+  var d=new Date(ts||0);
+  return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);
+}
+function photoDayLabel(ts){
+  var d=new Date(ts||0);
+  var now=new Date();
+  var today=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  var day=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+  var diff=Math.round((today-day)/86400000);
+  if(diff===0) return "Hari ini";
+  if(diff===1) return "Kemarin";
+  return d.toLocaleDateString("id-ID",{weekday:"short",day:"numeric",month:"short",year:"numeric"});
+}
+function refreshGallery(){
+  var box=document.getElementById("gallery");
+  if(!photos.length){
+    box.innerHTML="<div class='muted' style='padding:20px;text-align:center;font-size:13px'>Belum ada foto</div>";
+    clearSelection();
+    return;
+  }
+
+  // Kelompokkan foto per tanggal (hari yang sama)
+  var groups={};
+  var order=[];
+  for(var i=0;i<photos.length;i++){
+    var p=photos[i];
+    var key=photoDayKey(p.time||p.id||0);
+    if(!groups[key]){ groups[key]=[]; order.push(key); }
+    groups[key].push(p);
+  }
+  // Urut tanggal terbaru di atas
+  order.sort(function(a,b){ return a<b?1:a>b?-1:0; });
+
+  var h="";
+  for(var g=0;g<order.length;g++){
+    var key=order[g];
+    var list=groups[key];
+    var label=photoDayLabel(list[0].time||list[0].id||0);
+    h+='<div class="photo-day">';
+    h+='<div class="photo-day-head"><span>'+label+'</span></div>';
+    h+='<div class="photo-grid">';
+    for(var i=0;i<list.length;i++){
+      var p=list[i];
+      var sel=isSelected(p.id)?" selected":"";
+      h+='<div class="photo-item'+sel+'" data-id="'+p.id+'"><img src="'+p.image+'" draggable="false"></div>';
+    }
+    h+='</div></div>';
+  }
+  box.innerHTML=h;
+
+  var items=box.querySelectorAll(".photo-item");
+  for(var j=0;j<items.length;j++){
+    (function(el){
+      var id=parseInt(el.getAttribute("data-id"),10);
+      el.addEventListener("click", function(e){
+        if(selectMode){ e.preventDefault(); e.stopPropagation(); toggleSelect(id); return; }
+        if(lpOpened){ e.preventDefault(); e.stopPropagation(); return; }
+        viewPhoto(id);
+      });
+      el.addEventListener("touchstart", function(){
+        lpMoved=0;
+        if(lpTimer) clearTimeout(lpTimer);
+        lpTimer=setTimeout(function(){ if(!lpMoved) enterSelectMode(id); }, 500);
+      }, {passive:true});
+      el.addEventListener("touchmove", function(){ lpMoved=1; if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } }, {passive:true});
+      el.addEventListener("touchend", function(){ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } }, {passive:true});
+      el.addEventListener("touchcancel", function(){ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } }, {passive:true});
+      el.addEventListener("contextmenu", function(e){ e.preventDefault(); enterSelectMode(id); });
+      el.addEventListener("mousedown", function(e){
+        if(e.button!==0) return;
+        lpMoved=0;
+        if(lpTimer) clearTimeout(lpTimer);
+        lpTimer=setTimeout(function(){ if(!lpMoved) enterSelectMode(id); }, 500);
+      });
+      el.addEventListener("mouseup", function(){ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } });
+      el.addEventListener("mouseleave", function(){ if(lpTimer){ clearTimeout(lpTimer); lpTimer=null; } });
+    })(items[j]);
+  }
+  if(selectMode && selectedIds.length) showSelectBar();
+}
+
+
+function viewPhoto(id){
+  var idx=-1;
+  for(var i=0;i<photos.length;i++){
+    if(photos[i].id==id){ idx=i; break; }
+  }
+  if(idx<0) return;
+  var p=photos[idx];
+
+  var old=document.getElementById("photoViewer");
+  if(old) old.remove();
+
+  var d=document.createElement("div");
+  d.id="photoViewer";
+  d.className="fullscreen-photo show";
+  d.innerHTML=
+    '<button class="fs-close" type="button" aria-label="Tutup">×</button>'+
+    '<div class="fs-img-wrap"><img src="'+p.image+'" draggable="false"></div>'+
+    '<div class="fs-actions">'+
+      '<button type="button" class="photo-download" data-act="dl">Download</button>'+
+      '<button type="button" class="photo-share" data-act="sh">Share</button>'+
+      '<button type="button" class="photo-delete" data-act="del">Hapus</button>'+
+    '</div>';
+
+  var wrap=d.querySelector(".fs-img-wrap");
+  var img=wrap.querySelector("img");
+
+  // Pinch-to-zoom + pan state
+  var scale=1, tx=0, ty=0;
+  var startScale=1, startTx=0, startTy=0;
+  var lastTap=0, moved=0;
+  var mode=""; // "pan" | "pinch" | "swipe"
+  var panX=0, panY=0;
+  var pinchDist=0, pinchMidX=0, pinchMidY=0;
+  var swipeStartX=0, swipeStartY=0, swipeDx=0, swipeDy=0;
+
+  function applyTransform(){
+    img.style.transform="translate("+tx+"px,"+ty+"px) scale("+scale+")";
+    img.style.transition="none";
+  }
+  function resetZoom(){
+    scale=1; tx=0; ty=0;
+    applyTransform();
+  }
+  function dist(t1,t2){
+    var dx=t1.clientX-t2.clientX, dy=t1.clientY-t2.clientY;
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+  function clampPan(){
+    if(scale<=1){ tx=0; ty=0; return; }
+    var maxX=(scale-1)*img.clientWidth*0.55;
+    var maxY=(scale-1)*img.clientHeight*0.55;
+    if(tx>maxX) tx=maxX; if(tx<-maxX) tx=-maxX;
+    if(ty>maxY) ty=maxY; if(ty<-maxY) ty=-maxY;
+  }
+
+  function showAtIndex(newIdx){
+    if(newIdx<0 || newIdx>=photos.length) return;
+    idx=newIdx;
+    p=photos[idx];
+    img.src=p.image;
+    resetZoom();
+  }
+
+  function goNextPhoto(){
+    if(idx<photos.length-1) showAtIndex(idx+1);
+  }
+  function goPrevPhoto(){
+    if(idx>0) showAtIndex(idx-1);
+  }
+
+  wrap.addEventListener("touchstart", function(e){
+    if(e.touches.length===1){
+      mode="pan";
+      panX=e.touches[0].clientX;
+      panY=e.touches[0].clientY;
+      swipeStartX=e.touches[0].clientX;
+      swipeStartY=e.touches[0].clientY;
+      swipeDx=0; swipeDy=0;
+      startTx=tx; startTy=ty;
+      moved=0;
+    } else if(e.touches.length===2){
+      mode="pinch";
+      pinchDist=dist(e.touches[0], e.touches[1]);
+      startScale=scale;
+      startTx=tx; startTy=ty;
+      pinchMidX=(e.touches[0].clientX+e.touches[1].clientX)/2;
+      pinchMidY=(e.touches[0].clientY+e.touches[1].clientY)/2;
+      moved=1;
+    }
+  }, {passive:true});
+
+  wrap.addEventListener("touchmove", function(e){
+    if(mode==="pinch" && e.touches.length===2){
+      e.preventDefault();
+      var dNow=dist(e.touches[0], e.touches[1]);
+      if(pinchDist>0){
+        scale=Math.max(1, Math.min(5, startScale*(dNow/pinchDist)));
+        var mx=(e.touches[0].clientX+e.touches[1].clientX)/2;
+        var my=(e.touches[0].clientY+e.touches[1].clientY)/2;
+        tx=startTx+(mx-pinchMidX);
+        ty=startTy+(my-pinchMidY);
+        clampPan();
+        applyTransform();
+      }
+      moved=1;
+    } else if(e.touches.length===1){
+      var dx=e.touches[0].clientX-panX;
+      var dy=e.touches[0].clientY-panY;
+      swipeDx=e.touches[0].clientX-swipeStartX;
+      swipeDy=e.touches[0].clientY-swipeStartY;
+      if(Math.abs(dx)>4 || Math.abs(dy)>4) moved=1;
+
+      // Zoom aktif → pan gambar
+      if(scale>1.05){
+        e.preventDefault();
+        mode="pan";
+        tx=startTx+dx;
+        ty=startTy+dy;
+        clampPan();
+        applyTransform();
+      } else {
+        // Belum zoom → geser horizontal untuk ganti foto (preview slide)
+        if(Math.abs(swipeDx)>Math.abs(swipeDy) && Math.abs(swipeDx)>8){
+          e.preventDefault();
+          mode="swipe";
+          img.style.transition="none";
+          img.style.transform="translate("+swipeDx+"px,0) scale(1)";
+        }
+      }
+    }
+  }, {passive:false});
+
+  wrap.addEventListener("touchend", function(e){
+    if(e.touches.length===0){
+      // Swipe ganti foto (hanya jika tidak zoom)
+      if(mode==="swipe" || (scale<=1.05 && Math.abs(swipeDx)>Math.abs(swipeDy) && Math.abs(swipeDx)>60)){
+        var goNext=swipeDx<0; // geser kiri = foto berikutnya
+        img.style.transition="transform .18s ease";
+        if(goNext && idx<photos.length-1){
+          img.style.transform="translate(-120%,0) scale(1)";
+          setTimeout(function(){ showAtIndex(idx+1); }, 160);
+        } else if(!goNext && idx>0){
+          img.style.transform="translate(120%,0) scale(1)";
+          setTimeout(function(){ showAtIndex(idx-1); }, 160);
+        } else {
+          // Habis / tidak ada foto lagi → kembali ke tengah
+          img.style.transform="translate(0,0) scale(1)";
+          setTimeout(function(){ resetZoom(); }, 180);
+        }
+        swipeDx=0; swipeDy=0;
+        mode="";
+        return;
+      }
+
+      // double-tap zoom
+      if(!moved && mode==="pan"){
+        var now=Date.now();
+        if(now-lastTap<300){
+          if(scale>1.05){ scale=1; tx=0; ty=0; }
+          else { scale=2.5; tx=0; ty=0; }
+          applyTransform();
+          lastTap=0;
+        } else {
+          lastTap=now;
+        }
+      }
+      if(scale<=1.02){ scale=1; tx=0; ty=0; applyTransform(); }
+      mode="";
+      swipeDx=0; swipeDy=0;
+    } else if(e.touches.length===1){
+      mode="pan";
+      panX=e.touches[0].clientX;
+      panY=e.touches[0].clientY;
+      startTx=tx; startTy=ty;
+    }
+  }, {passive:true});
+
+  // Desktop: scroll wheel zoom
+  wrap.addEventListener("wheel", function(e){
+    e.preventDefault();
+    var delta=e.deltaY>0 ? 0.9 : 1.1;
+    scale=Math.max(1, Math.min(5, scale*delta));
+    if(scale<=1){ tx=0; ty=0; }
+    clampPan();
+    applyTransform();
+  }, {passive:false});
+
+  // Desktop: panah kiri/kanan ganti foto
+  function onKey(e){
+    if(!document.getElementById("photoViewer")){
+      document.removeEventListener("keydown", onKey);
+      return;
+    }
+    if(e.key==="ArrowLeft"){ e.preventDefault(); goPrevPhoto(); }
+    if(e.key==="ArrowRight"){ e.preventDefault(); goNextPhoto(); }
+    if(e.key==="Escape"){ d.remove(); document.removeEventListener("keydown", onKey); }
+  }
+  document.addEventListener("keydown", onKey);
+
+  d.querySelector(".fs-close").onclick=function(e){
+    e.stopPropagation();
+    document.removeEventListener("keydown", onKey);
+    d.remove();
+  };
+  d.querySelector('[data-act="dl"]').onclick=function(e){
+    e.stopPropagation();
+    downloadPhoto(p.image);
+  };
+  d.querySelector('[data-act="sh"]').onclick=function(e){
+    e.stopPropagation();
+    sharePhoto(p.image);
+  };
+  d.querySelector('[data-act="del"]').onclick=function(e){
+    e.stopPropagation();
+    document.removeEventListener("keydown", onKey);
+    d.remove();
+    showDeleteConfirm(p.id);
+  };
+
+  document.body.appendChild(d);
+}
+  function downloadPhoto(img){
+
+var a=document.createElement("a");
+
+a.href=img;
+
+a.download="SPX_Express_12_"+Date.now()+".jpg";
+
+a.click();
+
+toast("Download selesai");
+
+  }
+  async function sharePhoto(img){
+try{
+const blob=await(await fetch(img)).blob();
+const file=new File([blob],"SPX_Express_12.jpg",{type:"image/jpeg"});
+// Pesan WhatsApp kosong — hanya file
+if(navigator.canShare && navigator.canShare({files:[file]})){
+  await navigator.share({ files:[file] });
+}else if(navigator.share){
+  await navigator.share({ files:[file] });
+}else{
+  toast("Share tidak didukung");
+}
+}catch(e){
+  toast("Batal");
+}
+  }
+  var deletePhotoId=null;
+var confirmCallback=null;
+
+function showAppConfirm(title, message, onOk){
+  confirmCallback=typeof onOk==="function"?onOk:null;
+  deletePhotoId=null;
+  deletePhotoIds=null;
+  var t=document.querySelector("#confirmModal h3");
+  var m=document.querySelector("#confirmModal p");
+  if(t) t.textContent=title||"Konfirmasi";
+  if(m) m.textContent=message||"Yakin?";
+  document.getElementById("confirmModal").classList.add("show");
+}
+
+function showDeleteConfirm(id){
+  deletePhotoId=id;
+  deletePhotoIds=null;
+  confirmCallback=null;
+  var title=document.querySelector("#confirmModal h3");
+  var msg=document.querySelector("#confirmModal p");
+  if(title) title.textContent="🗑 Hapus Foto";
+  if(msg) msg.textContent="Yakin ingin menghapus foto ini?";
+  document.getElementById("confirmModal").classList.add("show");
+}
+
+function closeConfirm(){
+  document.getElementById("confirmModal").classList.remove("show");
+  deletePhotoId=null;
+  deletePhotoIds=null;
+  confirmCallback=null;
+}
+
+function confirmDelete(){
+  var cb=confirmCallback;
+  var photoId=deletePhotoId;
+  var photoIds=deletePhotoIds?deletePhotoIds.slice():null;
+  // tutup dulu biar callback bersih
+  document.getElementById("confirmModal").classList.remove("show");
+  confirmCallback=null;
+  deletePhotoId=null;
+  deletePhotoIds=null;
+
+  if(photoIds && photoIds.length){
+    clearSelection();
+    deleteSelectedPhotos(photoIds);
+    return;
+  }
+  if(photoId!=null){
+    deletePhoto(photoId);
+    return;
+  }
+  if(cb) cb();
+}
+
+  // ==========================
+// INDEXED DB
+// ==========================
+
+function initPhotoDB(){
+
+var req=indexedDB.open("ScanNotePhotoDB",1);
+
+req.onupgradeneeded=function(e){
+
+photoDB=e.target.result;
+
+if(!photoDB.objectStoreNames.contains("photos")){
+
+photoDB.createObjectStore("photos",{
+keyPath:"id",
+autoIncrement:true
+});
+
+}
+
+};
+
+req.onsuccess=function(e){
+
+photoDB=e.target.result;
+
+loadPhotos();
+
+};
+
+req.onerror=function(){
+
+toast("Database gagal dibuat");
+
+};
+
+}
+
+function savePhoto(data){
+
+if(!photoDB) return;
+
+var tx=photoDB.transaction(["photos"],"readwrite");
+
+var store=tx.objectStore("photos");
+
+store.add(data);
+
+tx.oncomplete=function(){
+
+loadPhotos();
+
+};
+
+}
+
+function loadPhotos(){
+
+if(!photoDB) return;
+
+photos=[];
+
+var tx=photoDB.transaction(["photos"],"readonly");
+
+var store=tx.objectStore("photos");
+
+store.openCursor().onsuccess=function(e){
+
+var c=e.target.result;
+
+if(c){
+
+photos.unshift(c.value);
+
+c.continue();
+
+}else{
+
+refreshGallery();
+
+}
+
+};
+
+}
+
+function deletePhoto(id){
+
+var tx=photoDB.transaction(["photos"],"readwrite");
+
+tx.objectStore("photos").delete(id);
+
+tx.oncomplete=function(){
+
+loadPhotos();
+
+toast("Foto dihapus");
+
+};
+
+  }
+sw();
+moveOldScansToRiwayat();
+stat();
+perToko();
+fill();
+initPhotoDB();
+setTimeout(function(){ prefetchLocation(); }, 800);
+</script>
+  <div id="confirmModal" class="confirm-modal">
+
+  <div class="confirm-box">
+
+    <h3>🗑 Hapus Foto</h3>
+
+    <p>Yakin ingin menghapus foto ini?</p>
+
+    <div class="confirm-btn">
+
+      <button class="btn btn2" onclick="closeConfirm()">
+        Batal
+      </button>
+
+      <button class="btn btn3" onclick="confirmDelete()">
+        Hapus
+      </button>
+
+    </div>
+
+  </div>
+
+  </div>
+</body>
+</html>
